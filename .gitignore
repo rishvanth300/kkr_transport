@@ -1,0 +1,23 @@
+# TCMS .gitignore — SRS NFR-SEC-001
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+db.sqlite3
+*.dump
+*.sqlite3
+staticfiles/
+media/*
+!media/.gitkeep
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
