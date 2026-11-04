@@ -1,0 +1,9 @@
+# TCMS — pinned dependencies (SRS NFR-SEC-010, Appendix A)
+Django==5.2.18
+dj-database-url==2.3.0
+psycopg2-binary==2.9.11
+python-dotenv==1.2.1
+whitenoise==6.11.0
+gunicorn==23.0.0
+django-axes==7.1.0
+defusedxml==0.7.1
