@@ -4,12 +4,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}KKR Transport{% endblock %}</title>
+  <title>{% block title %}KKR Transport | Transport Management System{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{% static 'images/kkr-transport-logo.png' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% block extra_head %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% block body_class %}{% endblock %}" data-page-ready>
+  <div class="splash-screen" id="splash-screen" aria-label="Loading KKR Transport" role="status">
+    <div class="splash-content">
+      <img src="{% static 'images/kkr-transport-logo.png' %}" alt="KKR Transport" class="splash-logo">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <strong>Loading...</strong>
+      <span>Moving Forward Together</span>
+    </div>
+  </div>
   <main>
+    {% if messages %}
+      {% for message in messages %}
+        <p class="message {{ message.tags }}">{{ message }}</p>
+      {% endfor %}
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
+  <script src="{% static 'js/app.js' %}" defer></script>
 </body>
 </html>

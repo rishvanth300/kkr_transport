@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Staff Details{% endblock %}
+{% block content %}
+<section class="form-page">
+  <p class="eyebrow">Super Admin</p>
+  <h1>Staff Details</h1>
+  <dl>
+    <dt>Staff ID</dt><dd>{{ staff.id }}</dd>
+    <dt>Staff name</dt><dd>{{ staff.display_name }}</dd>
+    <dt>Phone number</dt><dd>{{ staff.phone_number }}</dd>
+    <dt>Role</dt><dd>Staff</dd>
+    <dt>Account status</dt>
+    <dd>{% if staff.is_active and staff.user.is_active %}Active{% else %}Inactive{% endif %}</dd>
+    <dt>Date created</dt><dd>{{ staff.created_at|date:"d M Y, H:i" }}</dd>
+  </dl>
+  <p>
+    <a class="button-link" href="{% url 'dashboard:edit_staff' staff.id %}">Edit details</a>
+    <a class="button-link" href="{% url 'dashboard:reset_staff_password' staff.id %}">Reset password</a>
+  </p>
+  <p><a href="{% url 'dashboard:super_admin' %}">Back to dashboard</a></p>
+</section>
+{% endblock %}

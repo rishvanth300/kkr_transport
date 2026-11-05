@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "accounts",
+    "dashboard",
 ]
 
 MIDDLEWARE = [
@@ -75,5 +76,6 @@ LOGIN_REDIRECT_URL = "/accounts/"
 LOGOUT_REDIRECT_URL = "/accounts/login/"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = int(os.environ.get("SESSION_COOKIE_AGE", 60 * 60 * 8))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

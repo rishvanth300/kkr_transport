@@ -1,32 +1,41 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}KKR Transport Login{% endblock %}
+{% block title %}KKR Transport | Login{% endblock %}
+{% block body_class %}login-body{% endblock %}
 
 {% block content %}
 <section class="auth-page">
   <div class="auth-panel">
-    <div class="brand-mark" aria-hidden="true">KT</div>
-    <p class="eyebrow">KKR Transport</p>
-    <h1>Welcome back</h1>
-    <p class="muted">Sign in to manage your transport operations.</p>
+    <img class="login-logo" src="{% static 'images/kkr-transport-logo.png' %}" alt="KKR Transport">
+    <p class="eyebrow">Transport Management System</p>
+    <h1>Welcome Back</h1>
+    <p class="muted">Login to Continue</p>
 
-    <form method="post" class="auth-form">
+    <form method="post" class="auth-form" data-login-form>
       {% csrf_token %}
       <div class="field">
         <label for="{{ form.username.id_for_label }}">Phone number</label>
-        {{ form.username }}
+        <div class="input-with-icon">
+          <span aria-hidden="true">☎</span>
+          {{ form.username }}
+        </div>
       </div>
       <div class="field">
         <label for="{{ form.password.id_for_label }}">Password</label>
-        {{ form.password }}
+        <div class="input-with-icon">
+          <span aria-hidden="true">●</span>
+          {{ form.password }}
+          <button type="button" class="password-toggle" data-password-toggle aria-label="Show password">Show</button>
+        </div>
       </div>
       {% if form.non_field_errors %}
         <p class="form-error">Invalid phone number or password.</p>
       {% endif %}
-      <button type="submit">Sign in</button>
+      <button type="submit" class="login-button" data-login-button>Login</button>
     </form>
 
-    <p class="auth-note">Access is provided by your administrator.</p>
+    <p class="auth-note">Efficient Transport. On Time Always.</p>
   </div>
 </section>
 {% endblock %}

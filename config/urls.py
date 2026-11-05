@@ -18,5 +18,6 @@ urlpatterns = [
     path("", root_redirect, name="root"),
     path("healthz", healthz, name="healthz"),
     path("accounts/", include("accounts.urls")),
+    path("dashboard/", include("dashboard.urls")),
     path("admin/", admin.site.urls),
 ]
