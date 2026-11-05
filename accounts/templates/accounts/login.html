@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}KKR Transport Login{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+  <div class="auth-panel">
+    <div class="brand-mark" aria-hidden="true">KT</div>
+    <p class="eyebrow">KKR Transport</p>
+    <h1>Welcome back</h1>
+    <p class="muted">Sign in to manage your transport operations.</p>
+
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      <div class="field">
+        <label for="{{ form.username.id_for_label }}">Phone number</label>
+        {{ form.username }}
+      </div>
+      <div class="field">
+        <label for="{{ form.password.id_for_label }}">Password</label>
+        {{ form.password }}
+      </div>
+      {% if form.non_field_errors %}
+        <p class="form-error">Invalid phone number or password.</p>
+      {% endif %}
+      <button type="submit">Sign in</button>
+    </form>
+
+    <p class="auth-note">Access is provided by your administrator.</p>
+  </div>
+</section>
+{% endblock %}

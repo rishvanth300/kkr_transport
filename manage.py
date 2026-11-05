@@ -4,6 +4,7 @@ import sys
 
 
 def main():
+    """Run Django management commands from the terminal."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
     try:
         from django.core.management import execute_from_command_line

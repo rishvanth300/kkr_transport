@@ -1,6 +1,6 @@
 # kkr_transport
 
-Small Django project for transport management.
+Small Django project for login and user authentication.
 
 ## Run
 
@@ -9,14 +9,21 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 python manage.py migrate
+python manage.py createsuperuser
 python manage.py runserver
 ```
 
 ## Folders
 
 - `config/`: project settings and URL configuration.
-- `accounts/`, `fleet/`, `trips/`, `dashboard/`, `reports/`: application modules.
-- `templates/`: project-wide HTML templates.
-- `<module>/templates/<module>/`: HTML templates owned by one module.
+- `accounts/`: login, logout, and protected user page.
+- `templates/`: shared HTML layout.
 - `static/css/`: CSS files.
-- `media/`: uploaded images and other user files.
+- `.env`: local PostgreSQL and Django configuration.
+
+## URLs
+
+- `/accounts/login/`: login
+- `/accounts/logout/`: logout
+- `/accounts/`: protected page after login
+- `/admin/`: user and group management

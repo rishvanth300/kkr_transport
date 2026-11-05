@@ -4,10 +4,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}TCMS{% endblock %}</title>
+  <title>{% block title %}KKR Transport{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <main>
     {% block content %}{% endblock %}
   </main>
