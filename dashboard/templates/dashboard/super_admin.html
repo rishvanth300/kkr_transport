@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Super Admin Dashboard{% endblock %}
+{% block content %}
+<section class="dashboard-page">
+  <header class="dashboard-header">
+    <img class="dashboard-logo" src="{% static 'images/kkr-transport-logo.png' %}" alt="KKR Transport">
+  </header>
+  <p class="eyebrow">KKR Transport</p>
+  <h1>Super Admin Dashboard</h1>
+  <p>Welcome, {{ user.username }}.</p>
+
+  <p><a class="button-link" href="{% url 'dashboard:create_staff' %}">Create staff account</a></p>
+
+  <h2>Staff accounts</h2>
+  {% if staff_members %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Staff ID</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Date created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for staff in staff_members %}
+            <tr>
+              <td>{{ staff.id }}</td>
+              <td>{{ staff.display_name }}</td>
+              <td>{{ staff.phone_number }}</td>
+              <td>Staff</td>
+              <td>{% if staff.is_active and staff.user.is_active %}Active{% else %}Inactive{% endif %}</td>
+              <td>{{ staff.created_at|date:"d M Y, H:i" }}</td>
+              <td>
+                <a href="{% url 'dashboard:staff_detail' staff.id %}">View</a>
+                <a href="{% url 'dashboard:edit_staff' staff.id %}">Edit</a>
+                <form method="post" action="{% url 'dashboard:toggle_staff_status' staff.id %}">
+                  {% csrf_token %}
+                  <button type="submit">{% if staff.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p>No staff accounts have been created yet.</p>
+  {% endif %}
+
+  <form method="post" action="{% url 'accounts:logout' %}">
+    {% csrf_token %}
+    <button type="submit">Logout</button>
+  </form>
+</section>
+{% endblock %}

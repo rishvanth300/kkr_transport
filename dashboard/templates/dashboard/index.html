@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Staff Dashboard{% endblock %}
+{% block content %}
+<section class="dashboard-page">
+  <header class="dashboard-header">
+    <img class="dashboard-logo" src="{% static 'images/kkr-transport-logo.png' %}" alt="KKR Transport">
+  </header>
+  <p class="eyebrow">KKR Transport</p>
+  <h1>Staff Dashboard</h1>
+  <p>Welcome, {{ staff.display_name }}.</p>
+  <form method="post" action="{% url 'accounts:logout' %}">
+    {% csrf_token %}
+    <button type="submit">Logout</button>
+  </form>
+</section>
+{% endblock %}
