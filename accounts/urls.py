@@ -1,3 +1,15 @@
-"""Accounts URLs (M-01 auth, M-02 roles, M-08 audit) — structure only."""
+from django.urls import path
 
-urlpatterns = []
+from . import views
+
+app_name = "accounts"
+
+urlpatterns = [
+    path(
+        "login/",
+        views.AccountLoginView.as_view(template_name="accounts/login.html"),
+        name="login",
+    ),
+    path("logout/", views.account_logout, name="logout"),
+    path("", views.home, name="home"),
+]

@@ -1,10 +1,10 @@
-# kkr_transport
+# KKR Transport
 
-Small Django project for transport management.
+Django transport management system with Super Admin and Staff login.
 
-## Run
+## Setup
 
-```bash
+```powershell
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
@@ -12,11 +12,16 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-## Folders
+Create the first Super Admin only if needed:
 
-- `config/`: project settings and URL configuration.
-- `accounts/`, `fleet/`, `trips/`, `dashboard/`, `reports/`: application modules.
-- `templates/`: project-wide HTML templates.
-- `<module>/templates/<module>/`: HTML templates owned by one module.
-- `static/css/`: CSS files.
-- `media/`: uploaded images and other user files.
+```powershell
+python manage.py createsuperuser
+```
+
+## Main URLs
+
+- `/accounts/login/` - Login
+- `/dashboard/super-admin/` - Super Admin dashboard
+- `/dashboard/` - Staff dashboard
+
+Super Admins create and manage Staff accounts. Staff use their phone number and password to log in.
