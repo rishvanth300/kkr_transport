@@ -5,6 +5,16 @@
 {% block page_title %}Dashboard Overview{% endblock %}
 
 {% block dashboard_content %}
+<div class="panel-header" style="margin-bottom:1rem;">
+  <div>
+    <p class="muted" style="margin:0;">Quick actions</p>
+  </div>
+  <div class="form-actions" style="margin-top:0;">
+    <a class="button-link small" href="{% url 'fleet:vehicle_add' %}">Add Vehicle</a>
+    <a class="button-link small" href="{% url 'fleet:driver_add' %}">Add Driver</a>
+    <a class="button-link small secondary-button" href="{% url 'trips:add' %}">Add Trip Sheet</a>
+  </div>
+</div>
 <section class="kpi-grid">
   <article class="kpi-card accent-navy">
     <p class="kpi-label">Total Staff Members</p>
@@ -116,11 +126,21 @@
       <a href="{% url 'dashboard:trucks' %}" class="text-link">View trucks</a>
     </div>
     {% if trucks_available %}
-      <p>Truck records are available.</p>
+      <p>{{ total_trucks|default:0 }} vehicle(s) registered.</p>
+      {% if vehicles %}
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.6rem 0 0.2rem;">
+          {% for v in vehicles %}
+            <span class="status-pill ok" style="font-size:0.85rem;padding:0.35rem 0.65rem;" title="Registered vehicle">
+              <span aria-hidden="true" style="margin-right:0.35rem;">🚚</span>{{ v.vehicle_number }}
+            </span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <div class="form-actions"><a class="button-link small" href="{% url 'fleet:vehicle_add' %}">Add Vehicle</a><a class="button-link small secondary-button" href="{% url 'dashboard:trucks' %}">View details</a></div>
     {% else %}
       <div class="empty-state compact">
         <strong>No vehicle data available</strong>
-        <p>Truck and vehicle models are not present in the current schema. This section will populate when fleet data is added.</p>
+        <p>This section will populate when fleet data is added.</p>
       </div>
     {% endif %}
   </section>
@@ -137,8 +157,9 @@
       <p>Driver records are available.</p>
     {% else %}
       <div class="empty-state compact">
-        <strong>No driver data available</strong>
-        <p>Driver models are not present in the current schema. This section will populate when driver records are added.</p>
+        <strong>Driver registration prepared</strong>
+        <p>Driver registration is separate from vehicles. Use the dedicated entry point.</p>
+        <a class="button-link small" href="{% url 'fleet:driver_add' %}">Add Driver</a>
       </div>
     {% endif %}
   </section>

@@ -9,15 +9,50 @@
   <div class="panel-header">
     <div>
       <h2>Vehicles / Trucks</h2>
-      <p class="muted">Truck count, details, and available vehicle information.</p>
+      <p class="muted">Registered vehicles and fleet details. Total: {{ total_trucks|default:0 }}</p>
+    </div>
+    <div class="form-actions" style="margin-top:0;">
+      <a class="button-link small" href="{% url 'fleet:vehicle_add' %}">Add Vehicle</a>
+      <a class="button-link small secondary-button" href="{% url 'trips:add' %}">Add Trip Sheet</a>
     </div>
   </div>
-  {% if trucks_available %}
-    <p class="muted">Truck records are available in the system.</p>
+
+  {% if vehicles %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Vehicle No.</th>
+            <th>Make</th>
+            <th>Model</th>
+            <th>Year</th>
+            <th>Wheels</th>
+            <th>FC Expiry</th>
+            <th>Insurance Expiry</th>
+            <th>Pollution Expiry</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vehicles %}
+          <tr>
+            <td>{{ v.vehicle_number }}</td>
+            <td>{{ v.vehicle_make }}</td>
+            <td>{{ v.vehicle_model }}</td>
+            <td>{{ v.manufacturing_year }}</td>
+            <td>{{ v.wheel_configuration }}</td>
+            <td>{{ v.fc_expiry_date|date:"d M Y" }}</td>
+            <td>{{ v.insurance_expiry_date|date:"d M Y" }}</td>
+            <td>{{ v.pollution_certificate_expiry_date|date:"d M Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   {% else %}
     <div class="empty-state">
-      <strong>No truck data available</strong>
-      <p>The current database schema does not include truck or vehicle models. When fleet records are added, total counts and vehicle details will be displayed here from live data.</p>
+      <strong>No vehicles registered yet</strong>
+      <p>Add a vehicle to start building your fleet records. Both Super Admin and Staff can register and view vehicles.</p>
+      <a class="button-link small" href="{% url 'fleet:vehicle_add' %}">Add first vehicle</a>
     </div>
   {% endif %}
 </section>

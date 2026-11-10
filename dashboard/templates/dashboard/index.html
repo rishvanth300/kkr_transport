@@ -5,7 +5,14 @@
 {% block page_title %}Operations Dashboard{% endblock %}
 
 {% block dashboard_content %}
-<p class="welcome-line">Welcome, <strong>{{ staff.display_name }}</strong>. Here is your operational overview.</p>
+<div class="panel-header" style="margin-bottom:1rem;">
+  <p class="welcome-line" style="margin:0;">Welcome, <strong>{{ staff.display_name }}</strong>. Here is your operational overview.</p>
+  <div class="form-actions" style="margin-top:0;">
+    <a class="button-link small" href="{% url 'fleet:vehicle_add' %}">Add Vehicle</a>
+    <a class="button-link small" href="{% url 'fleet:driver_add' %}">Add Driver</a>
+    <a class="button-link small secondary-button" href="{% url 'trips:add' %}">Add Trip Sheet</a>
+  </div>
+</div>
 
 <section class="kpi-grid">
   <article class="kpi-card accent-blue">
@@ -40,11 +47,21 @@
       <a href="{% url 'dashboard:trucks' %}" class="text-link">View trucks</a>
     </div>
     {% if trucks_available %}
-      <p>Truck records are available. Open the trucks section for details.</p>
+      <p>{{ total_trucks|default:0 }} vehicle(s) registered.</p>
+      {% if vehicles %}
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.6rem 0 0.2rem;">
+          {% for v in vehicles %}
+            <span class="status-pill ok" style="font-size:0.85rem;padding:0.35rem 0.65rem;" title="Registered vehicle">
+              <span aria-hidden="true" style="margin-right:0.35rem;">🚚</span>{{ v.vehicle_number }}
+            </span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <div class="form-actions"><a class="button-link small" href="{% url 'fleet:vehicle_add' %}">Add Vehicle</a><a class="button-link small secondary-button" href="{% url 'dashboard:trucks' %}">View details</a></div>
     {% else %}
       <div class="empty-state compact">
         <strong>No vehicle data available</strong>
-        <p>Truck and vehicle records are not configured in the current schema. This overview will update when fleet data is available.</p>
+        <p>Vehicle records are not configured. This overview will update when fleet data is available.</p>
       </div>
     {% endif %}
   </section>
@@ -61,8 +78,9 @@
       <p>Driver records are available. Open the drivers section for details.</p>
     {% else %}
       <div class="empty-state compact">
-        <strong>No driver data available</strong>
-        <p>Driver records are not configured in the current schema. This overview will update when driver data is available.</p>
+        <strong>Driver registration prepared</strong>
+        <p>Use the dedicated entry point to add drivers when the module is implemented.</p>
+        <a class="button-link small" href="{% url 'fleet:driver_add' %}">Add Driver</a>
       </div>
     {% endif %}
   </section>

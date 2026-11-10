@@ -1,3 +1,11 @@
-"""Trips URLs (M-05 core module) — structure only."""
+"""Trips URLs — Trip Sheet module (navigation ready)."""
 
-urlpatterns = []
+from django.urls import path
+
+from . import views
+
+app_name = "trips"
+
+urlpatterns = [
+    path("add/", views.trip_sheet_add, name="add"),
+]

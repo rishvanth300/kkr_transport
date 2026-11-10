@@ -74,9 +74,12 @@ def super_admin(request):
         The rendered dashboard response. Staff profiles and their linked User
         records are queried dynamically with ``select_related``.
     """
+    from fleet.models import Vehicle
+
     context = {
         "is_super_admin": True,
         "active_nav": "dashboard",
+        "vehicles": Vehicle.objects.all(),
         **get_staff_metrics(),
         **get_operational_metrics(),
     }
@@ -256,11 +259,14 @@ def home(request):
     if staff is None:
         raise PermissionDenied
 
+    from fleet.models import Vehicle
+
     context = {
         "staff": staff,
         "staff_profile": staff,
         "is_super_admin": False,
         "active_nav": "dashboard",
+        "vehicles": Vehicle.objects.all(),
         **get_operational_metrics(),
     }
     return render(request, "dashboard/index.html", context)
@@ -269,11 +275,14 @@ def home(request):
 @dashboard_access_required
 @never_cache
 def trucks(request):
-    """Render the trucks overview for the current authorized role."""
+    """Render the trucks overview and registered vehicle list."""
+    from fleet.models import Vehicle
+
     context = {
         "staff_profile": getattr(request, "staff_profile", None),
         "is_super_admin": request.is_super_admin,
         "active_nav": "trucks",
+        "vehicles": Vehicle.objects.all(),
         **get_operational_metrics(),
     }
     return render(request, "dashboard/trucks.html", context)

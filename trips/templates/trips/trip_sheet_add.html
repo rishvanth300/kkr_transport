@@ -1,0 +1,22 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Add Trip Sheet | KKR Transport{% endblock %}
+{% block page_eyebrow %}Trips{% endblock %}
+{% block page_title %}Add Trip Sheet{% endblock %}
+
+{% block dashboard_content %}
+<section class="panel form-panel">
+  <div class="panel-header">
+    <div>
+      <h2>Trip Sheet</h2>
+      <p class="muted">Dedicated Trip Sheet module entry point.</p>
+    </div>
+  </div>
+  <div class="empty-state compact">
+    <strong>Trip Sheet form coming in the next module</strong>
+    <p>This page is reserved for truck load and trip-related details entered by Staff or Super Admin. Diesel and other trip-based costs will be calculated from actual Trip Sheet records in that module. No dummy fuel costs are created here.</p>
+  </div>
+  <div class="form-actions">
+    <a class="button-link secondary-button" href="{% url 'dashboard:home' %}">Back to dashboard</a>
+  </div>
+</section>
+{% endblock %}

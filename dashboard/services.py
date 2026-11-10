@@ -20,16 +20,19 @@ def get_staff_metrics():
 def get_operational_metrics():
     """Return operational and financial metrics available in the current schema.
 
-    Trucks, drivers, revenue, expenses, and audit-log models are not present in
-    the current codebase, so these values are reported as unavailable rather than
-    invented.
+    Vehicle records are available via the fleet app. Driver, trip-based diesel,
+    revenue/expense, and audit-log models are not yet implemented; diesel cost
+    must be derived from actual Trip Sheet records in the upcoming module.
     """
+    from fleet.models import Vehicle
+
+    total_trucks = Vehicle.objects.count()
     return {
-        "total_trucks": None,
+        "total_trucks": total_trucks,
         "total_drivers": None,
         "total_revenue": None,
         "total_expenses": None,
-        "trucks_available": False,
+        "trucks_available": True,
         "drivers_available": False,
         "financial_available": False,
         "audit_logs_available": False,

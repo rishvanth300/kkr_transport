@@ -33,6 +33,11 @@
         <span class="nav-icon" aria-hidden="true">🗒</span><span>Audit Logs</span>
       </a>
 
+      <p class="nav-label">Operations</p>
+      <a href="{% url 'trips:add' %}" class="nav-link {% if active_nav == 'trips' %}is-active{% endif %}">
+        <span class="nav-icon" aria-hidden="true">＋</span><span>Add Trip Sheet</span>
+      </a>
+
       {% if is_super_admin %}
       <p class="nav-label">Administration</p>
       <a href="{% url 'dashboard:super_admin' %}" class="nav-link {% if active_nav == 'staff' %}is-active{% endif %}">
