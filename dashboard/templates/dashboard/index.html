@@ -1,17 +1,137 @@
-{% extends "base.html" %}
-{% load static %}
-{% block title %}Staff Dashboard{% endblock %}
-{% block content %}
-<section class="dashboard-page">
-  <header class="dashboard-header">
-    <img class="dashboard-logo" src="{% static 'images/kkr-transport-logo.png' %}" alt="KKR Transport">
-  </header>
-  <p class="eyebrow">KKR Transport</p>
-  <h1>Staff Dashboard</h1>
-  <p>Welcome, {{ staff.display_name }}.</p>
-  <form method="post" action="{% url 'accounts:logout' %}">
-    {% csrf_token %}
-    <button type="submit">Logout</button>
-  </form>
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Staff Dashboard | KKR Transport{% endblock %}
+{% block page_eyebrow %}Staff{% endblock %}
+{% block page_title %}Operations Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-header" style="margin-bottom:1rem;">
+  <p class="welcome-line" style="margin:0;">Welcome, <strong>{{ staff.display_name }}</strong>. Here is your operational overview.</p>
+  <div class="form-actions" style="margin-top:0;">
+    <a class="button-link small" href="{% url 'fleet:vehicle_add' %}">Add Vehicle</a>
+    <a class="button-link small" href="{% url 'fleet:driver_add' %}">Add Driver</a>
+    <a class="button-link small secondary-button" href="{% url 'trips:add' %}">Add Trip Sheet</a>
+  </div>
+</div>
+
+<section class="kpi-grid">
+  <article class="kpi-card accent-blue">
+    <p class="kpi-label">Total Trucks</p>
+    <p class="kpi-value">{% if total_trucks is not None %}{{ total_trucks }}{% else %}—{% endif %}</p>
+    <p class="kpi-meta">{% if trucks_available %}Available vehicles{% else %}Fleet module not available yet{% endif %}</p>
+  </article>
+  <article class="kpi-card accent-teal">
+    <p class="kpi-label">Total Drivers</p>
+    <p class="kpi-value">{% if total_drivers is not None %}{{ total_drivers }}{% else %}—{% endif %}</p>
+    <p class="kpi-meta">{% if drivers_available %}Registered drivers{% else %}Driver module not available yet{% endif %}</p>
+  </article>
+  <article class="kpi-card accent-gold">
+    <p class="kpi-label">Total Revenue / Amount</p>
+    <p class="kpi-value">{% if total_revenue is not None %}₹ {{ total_revenue }}{% else %}—{% endif %}</p>
+    <p class="kpi-meta">{% if financial_available %}Recorded revenue{% else %}Financial data not configured{% endif %}</p>
+  </article>
+  <article class="kpi-card accent-emerald">
+    <p class="kpi-label">Total Expenses</p>
+    <p class="kpi-value">{% if total_expenses is not None %}₹ {{ total_expenses }}{% else %}—{% endif %}</p>
+    <p class="kpi-meta">{% if financial_available %}Recorded expenses{% else %}Expense data not configured{% endif %}</p>
+  </article>
+</section>
+
+<div class="dashboard-grid two-col">
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>Truck Overview</h2>
+        <p class="muted">Truck count and relevant vehicle details available to staff.</p>
+      </div>
+      <a href="{% url 'dashboard:trucks' %}" class="text-link">View trucks</a>
+    </div>
+    {% if trucks_available %}
+      <p>{{ total_trucks|default:0 }} vehicle(s) registered.</p>
+      {% if vehicles %}
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin:0.6rem 0 0.2rem;">
+          {% for v in vehicles %}
+            <span class="status-pill ok" style="font-size:0.85rem;padding:0.35rem 0.65rem;" title="Registered vehicle">
+              <span aria-hidden="true" style="margin-right:0.35rem;">🚚</span>{{ v.vehicle_number }}
+            </span>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <div class="form-actions"><a class="button-link small" href="{% url 'fleet:vehicle_add' %}">Add Vehicle</a><a class="button-link small secondary-button" href="{% url 'dashboard:trucks' %}">View details</a></div>
+    {% else %}
+      <div class="empty-state compact">
+        <strong>No vehicle data available</strong>
+        <p>Vehicle records are not configured. This overview will update when fleet data is available.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>Driver Overview</h2>
+        <p class="muted">Driver count and information available to staff.</p>
+      </div>
+      <a href="{% url 'dashboard:drivers' %}" class="text-link">View drivers</a>
+    </div>
+    {% if drivers_available %}
+      <p>Driver records are available. Open the drivers section for details.</p>
+    {% else %}
+      <div class="empty-state compact">
+        <strong>Driver registration prepared</strong>
+        <p>Use the dedicated entry point to add drivers when the module is implemented.</p>
+        <a class="button-link small" href="{% url 'fleet:driver_add' %}">Add Driver</a>
+      </div>
+    {% endif %}
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Financial Overview</h2>
+      <p class="muted">Revenue, amount summaries, and expense information available to staff.</p>
+    </div>
+    <a href="{% url 'dashboard:financial' %}" class="text-link">Open details</a>
+  </div>
+  {% if financial_available %}
+    <div class="chart-wrap">
+      <canvas id="financeChart" aria-label="Financial summary chart" role="img"></canvas>
+    </div>
+  {% else %}
+    <div class="empty-state compact">
+      <strong>Financial data not available yet</strong>
+      <p>Revenue and expense records are not configured in the current database. Permitted financial summaries will appear here when data is available.</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Recent Audit Logs</h2>
+      <p class="muted">Relevant system activity and permitted details.</p>
+    </div>
+    <a href="{% url 'dashboard:audit_logs' %}" class="text-link">Open audit logs</a>
+  </div>
+  {% if audit_logs_available and audit_logs %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>User</th><th>Action</th><th>Date &amp; time</th><th>Details</th></tr>
+        </thead>
+        <tbody>
+          {% for log in audit_logs %}
+          <tr><td>{{ log.user }}</td><td>{{ log.action }}</td><td>{{ log.timestamp }}</td><td>{{ log.details }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state compact">
+      <strong>No audit log data available</strong>
+      <p>Audit tracking is not configured in the current application. Permitted activity details will appear here when available.</p>
+    </div>
+  {% endif %}
 </section>
 {% endblock %}

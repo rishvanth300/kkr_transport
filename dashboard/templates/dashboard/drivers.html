@@ -1,0 +1,28 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Drivers | KKR Transport{% endblock %}
+{% block page_eyebrow %}Operations{% endblock %}
+{% block page_title %}Driver Overview{% endblock %}
+
+{% block dashboard_content %}
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Drivers</h2>
+      <p class="muted">Driver count and relevant driver information.</p>
+    </div>
+    <div class="form-actions" style="margin-top:0;">
+      <a class="button-link small" href="{% url 'fleet:driver_add' %}">Add Driver</a>
+      <a class="button-link small secondary-button" href="{% url 'trips:add' %}">Add Trip Sheet</a>
+    </div>
+  </div>
+  {% if drivers_available %}
+    <p class="muted">Driver records are available in the system.</p>
+  {% else %}
+    <div class="empty-state">
+      <strong>Driver registration entry point ready</strong>
+      <p>Driver registration is kept separate from vehicle registration. Use the Add Driver button to access the dedicated entry point. Driver records will be listed here when the driver module is implemented.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
