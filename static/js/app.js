@@ -46,6 +46,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (sidebar) {
     sidebarToggles.forEach((btn) => btn.addEventListener("click", () => setSidebar(true)));
     sidebarCloses.forEach((btn) => btn.addEventListener("click", () => setSidebar(false)));
+    sidebar.querySelectorAll(".nav-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        if (window.innerWidth <= 1024) setSidebar(false);
+      });
+    });
     window.addEventListener("resize", () => {
       if (window.innerWidth > 1024) setSidebar(false);
     });

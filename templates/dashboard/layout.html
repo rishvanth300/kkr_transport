@@ -5,14 +5,14 @@
 
 {% block content %}
 <div class="app-shell">
-  <aside class="sidebar" id="sidebar" aria-label="Primary">
+  <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
     <div class="sidebar-brand">
-      <img src="{% static 'images/kkr-transport-logo.png' %}" alt="KKR Transport" class="sidebar-logo">
-      <div class="sidebar-brand-text">
-        <span class="eyebrow">TCMS</span>
-        <strong>KKR Transport</strong>
-      </div>
-      <button type="button" class="sidebar-close" data-sidebar-close aria-label="Close menu">×</button>
+      <a href="{% url 'dashboard:home' %}" class="sidebar-brand-link" aria-label="KKR Transport home">
+        <img src="{% static 'images/kkr-transport-logo.png' %}" alt="KKR Transport" class="sidebar-logo">
+      </a>
+      <button type="button" class="sidebar-close" data-sidebar-close aria-label="Close menu" title="Close menu">
+        <span aria-hidden="true">×</span>
+      </button>
     </div>
 
     <nav class="sidebar-nav">
