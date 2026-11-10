@@ -1,0 +1,39 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Financial Overview | KKR Transport{% endblock %}
+{% block page_eyebrow %}Finance{% endblock %}
+{% block page_title %}Financial Overview{% endblock %}
+
+{% block dashboard_content %}
+<section class="kpi-grid">
+  <article class="kpi-card accent-gold">
+    <p class="kpi-label">Total Revenue / Amount</p>
+    <p class="kpi-value">{% if total_revenue is not None %}₹ {{ total_revenue }}{% else %}—{% endif %}</p>
+    <p class="kpi-meta">{% if financial_available %}Recorded revenue{% else %}Not configured{% endif %}</p>
+  </article>
+  <article class="kpi-card accent-emerald">
+    <p class="kpi-label">Total Expenses</p>
+    <p class="kpi-value">{% if total_expenses is not None %}₹ {{ total_expenses }}{% else %}—{% endif %}</p>
+    <p class="kpi-meta">{% if financial_available %}Recorded expenses{% else %}Not configured{% endif %}</p>
+  </article>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Revenue and Expenses</h2>
+      <p class="muted">Permitted financial summaries based on available records.</p>
+    </div>
+  </div>
+  {% if financial_available %}
+    <div class="chart-wrap">
+      <canvas id="financeChart" aria-label="Financial summary chart" role="img"></canvas>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <strong>Financial data not available yet</strong>
+      <p>Revenue and expense models/fields are not present in the current application database. This page is ready to display summaries and charts as soon as those records exist, without using placeholder figures.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

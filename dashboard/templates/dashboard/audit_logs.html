@@ -1,0 +1,45 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Audit Logs | KKR Transport{% endblock %}
+{% block page_eyebrow %}System{% endblock %}
+{% block page_title %}Recent Audit Logs{% endblock %}
+
+{% block dashboard_content %}
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Recent System Activities</h2>
+      <p class="muted">User, action performed, date and time, and relevant details.</p>
+    </div>
+  </div>
+  {% if audit_logs_available and audit_logs %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Action</th>
+            <th>Date &amp; time</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in audit_logs %}
+          <tr>
+            <td>{{ log.user }}</td>
+            <td>{{ log.action }}</td>
+            <td>{{ log.timestamp }}</td>
+            <td>{{ log.details }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <strong>No audit log data available</strong>
+      <p>There is currently no audit log model or stored activity history in this application. When audit tracking is implemented, recent activities will be listed here with the acting user, action, timestamp, and details according to role permissions.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

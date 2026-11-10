@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block body_class %}app-body{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar" aria-label="Primary">
+    <div class="sidebar-brand">
+      <img src="{% static 'images/kkr-transport-logo.png' %}" alt="KKR Transport" class="sidebar-logo">
+      <div class="sidebar-brand-text">
+        <span class="eyebrow">TCMS</span>
+        <strong>KKR Transport</strong>
+      </div>
+      <button type="button" class="sidebar-close" data-sidebar-close aria-label="Close menu">×</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <p class="nav-label">Overview</p>
+      <a href="{% url 'dashboard:home' %}" class="nav-link {% if active_nav == 'dashboard' %}is-active{% endif %}">
+        <span class="nav-icon" aria-hidden="true">▣</span><span>Dashboard</span>
+      </a>
+      <a href="{% url 'dashboard:trucks' %}" class="nav-link {% if active_nav == 'trucks' %}is-active{% endif %}">
+        <span class="nav-icon" aria-hidden="true">🚚</span><span>Trucks</span>
+      </a>
+      <a href="{% url 'dashboard:drivers' %}" class="nav-link {% if active_nav == 'drivers' %}is-active{% endif %}">
+        <span class="nav-icon" aria-hidden="true">👤</span><span>Drivers</span>
+      </a>
+      <a href="{% url 'dashboard:financial' %}" class="nav-link {% if active_nav == 'financial' %}is-active{% endif %}">
+        <span class="nav-icon" aria-hidden="true">₹</span><span>Financial Overview</span>
+      </a>
+      <a href="{% url 'dashboard:audit_logs' %}" class="nav-link {% if active_nav == 'audit' %}is-active{% endif %}">
+        <span class="nav-icon" aria-hidden="true">🗒</span><span>Audit Logs</span>
+      </a>
+
+      {% if is_super_admin %}
+      <p class="nav-label">Administration</p>
+      <a href="{% url 'dashboard:super_admin' %}" class="nav-link {% if active_nav == 'staff' %}is-active{% endif %}">
+        <span class="nav-icon" aria-hidden="true">👥</span><span>Staff Management</span>
+      </a>
+      <a href="{% url 'dashboard:create_staff' %}" class="nav-link sub-link {% if active_nav == 'staff_create' %}is-active{% endif %}">
+        <span class="nav-icon" aria-hidden="true">＋</span><span>Create Staff</span>
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar" aria-hidden="true">{{ request.user.username|default:"U"|slice:":1"|upper }}</div>
+        <div class="sidebar-user-meta">
+          <strong>{% if is_super_admin %}Super Admin{% else %}{{ staff_profile.display_name|default:request.user.username }}{% endif %}</strong>
+          <span>{% if is_super_admin %}Full system access{% else %}Staff account{% endif %}</span>
+        </div>
+      </div>
+      <form method="post" action="{% url 'accounts:logout' %}" class="sidebar-logout">
+        {% csrf_token %}
+        <button type="submit" class="secondary-button">Logout</button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button type="button" class="icon-button" data-sidebar-toggle aria-label="Open menu" aria-expanded="false">☰</button>
+        <div>
+          <p class="eyebrow">{% block page_eyebrow %}Transport Management{% endblock %}</p>
+          <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="profile-chip">
+          <span class="profile-dot {% if is_super_admin %}admin{% else %}staff{% endif %}" aria-hidden="true"></span>
+          <div>
+            <strong>{% if is_super_admin %}{{ request.user.username }}{% else %}{{ staff_profile.display_name|default:request.user.username }}{% endif %}</strong>
+            <small>{% if is_super_admin %}Super Admin{% else %}Staff{% endif %}</small>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      {% block dashboard_content %}{% endblock %}
+    </div>
+  </div>
+  <div class="sidebar-backdrop" data-sidebar-close></div>
+</div>
+{% endblock %}

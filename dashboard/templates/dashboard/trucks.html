@@ -1,0 +1,24 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Trucks | KKR Transport{% endblock %}
+{% block page_eyebrow %}Fleet{% endblock %}
+{% block page_title %}Truck Overview{% endblock %}
+
+{% block dashboard_content %}
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Vehicles / Trucks</h2>
+      <p class="muted">Truck count, details, and available vehicle information.</p>
+    </div>
+  </div>
+  {% if trucks_available %}
+    <p class="muted">Truck records are available in the system.</p>
+  {% else %}
+    <div class="empty-state">
+      <strong>No truck data available</strong>
+      <p>The current database schema does not include truck or vehicle models. When fleet records are added, total counts and vehicle details will be displayed here from live data.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

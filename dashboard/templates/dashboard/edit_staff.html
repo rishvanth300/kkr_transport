@@ -1,10 +1,17 @@
-{% extends "base.html" %}
-{% block title %}Edit Staff{% endblock %}
-{% block content %}
-<section class="form-page">
-  <p class="eyebrow">Super Admin</p>
-  <h1>Edit Staff</h1>
-  <form method="post" class="auth-form">
+{% extends "dashboard/layout.html" %}
+{% block title %}Edit Staff | KKR Transport{% endblock %}
+{% block page_eyebrow %}Super Admin{% endblock %}
+{% block page_title %}Edit Staff{% endblock %}
+
+{% block dashboard_content %}
+<section class="panel form-panel">
+  <div class="panel-header">
+    <div>
+      <h2>{{ staff.display_name }}</h2>
+      <p class="muted">Update staff name and phone number.</p>
+    </div>
+  </div>
+  <form method="post" class="auth-form form-grid">
     {% csrf_token %}
     {% if form.non_field_errors %}<div class="form-error">{{ form.non_field_errors }}</div>{% endif %}
     {% for field in form %}
@@ -14,8 +21,10 @@
         {% for error in field.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
       </div>
     {% endfor %}
-    <button type="submit">Save changes</button>
+    <div class="form-actions">
+      <button type="submit">Save changes</button>
+      <a class="button-link secondary-button" href="{% url 'dashboard:staff_detail' staff.id %}">Cancel</a>
+    </div>
   </form>
-  <p><a href="{% url 'dashboard:staff_detail' staff.id %}">Cancel</a></p>
 </section>
 {% endblock %}

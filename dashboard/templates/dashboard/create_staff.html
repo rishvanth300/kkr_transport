@@ -1,12 +1,18 @@
-{% extends "base.html" %}
-{% block title %}Create Staff Account{% endblock %}
-{% block content %}
-<section class="form-page">
-  <p class="eyebrow">Super Admin</p>
-  <h1>Create Staff Account</h1>
-  <p class="muted">Create login details for a staff member.</p>
+{% extends "dashboard/layout.html" %}
+{% block title %}Create Staff Account | KKR Transport{% endblock %}
+{% block page_eyebrow %}Super Admin{% endblock %}
+{% block page_title %}Create Staff Account{% endblock %}
 
-  <form method="post" class="auth-form">
+{% block dashboard_content %}
+<section class="panel form-panel">
+  <div class="panel-header">
+    <div>
+      <h2>New staff account</h2>
+      <p class="muted">Create login details for a staff member.</p>
+    </div>
+  </div>
+
+  <form method="post" class="auth-form form-grid">
     {% csrf_token %}
     {% if form.non_field_errors %}
       <div class="form-error">{{ form.non_field_errors }}</div>
@@ -20,9 +26,10 @@
         {% endfor %}
       </div>
     {% endfor %}
-    <button type="submit">Create staff account</button>
+    <div class="form-actions">
+      <button type="submit">Create staff account</button>
+      <a class="button-link secondary-button" href="{% url 'dashboard:super_admin' %}">Back to dashboard</a>
+    </div>
   </form>
-
-  <p><a href="{% url 'dashboard:super_admin' %}">Back to dashboard</a></p>
 </section>
 {% endblock %}
