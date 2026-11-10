@@ -33,4 +33,26 @@ document.addEventListener("DOMContentLoaded", () => {
       loginButton.textContent = "Logging in...";
     });
   }
+
+  const sidebar = document.getElementById("sidebar");
+  const sidebarToggles = document.querySelectorAll("[data-sidebar-toggle]");
+  const sidebarCloses = document.querySelectorAll("[data-sidebar-close]");
+  const setSidebar = (open) => {
+    if (!sidebar) return;
+    sidebar.classList.toggle("is-open", open);
+    document.body.classList.toggle("sidebar-open", open);
+    sidebarToggles.forEach((btn) => btn.setAttribute("aria-expanded", open ? "true" : "false"));
+  };
+  if (sidebar) {
+    sidebarToggles.forEach((btn) => btn.addEventListener("click", () => setSidebar(true)));
+    sidebarCloses.forEach((btn) => btn.addEventListener("click", () => setSidebar(false)));
+    sidebar.querySelectorAll(".nav-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        if (window.innerWidth <= 1024) setSidebar(false);
+      });
+    });
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 1024) setSidebar(false);
+    });
+  }
 });

@@ -6,6 +6,10 @@ app_name = "dashboard"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("trucks/", views.trucks, name="trucks"),
+    path("drivers/", views.drivers, name="drivers"),
+    path("financial/", views.financial_overview, name="financial"),
+    path("audit-logs/", views.audit_logs, name="audit_logs"),
     path("super-admin/", views.super_admin, name="super_admin"),
     path("super-admin/staff/new/", views.create_staff, name="create_staff"),
     path(

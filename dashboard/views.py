@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from accounts.models import Staff
 
 from .forms import StaffCreationForm, StaffEditForm, StaffPasswordResetForm
+from .services import get_operational_metrics, get_staff_metrics
 
 
 def superadmin_required(view):
@@ -73,11 +74,16 @@ def super_admin(request):
         The rendered dashboard response. Staff profiles and their linked User
         records are queried dynamically with ``select_related``.
     """
-    return render(
-        request,
-        "dashboard/super_admin.html",
-        {"staff_members": Staff.objects.select_related("user")},
-    )
+    from fleet.models import Vehicle
+
+    context = {
+        "is_super_admin": True,
+        "active_nav": "dashboard",
+        "vehicles": Vehicle.objects.all(),
+        **get_staff_metrics(),
+        **get_operational_metrics(),
+    }
+    return render(request, "dashboard/super_admin.html", context)
 
 
 @superadmin_required
@@ -101,7 +107,11 @@ def create_staff(request):
             return redirect("dashboard:super_admin")
     else:
         form = StaffCreationForm()
-    return render(request, "dashboard/create_staff.html", {"form": form})
+    return render(
+        request,
+        "dashboard/create_staff.html",
+        {"form": form, "is_super_admin": True, "active_nav": "staff_create"},
+    )
 
 
 @superadmin_required
@@ -142,7 +152,11 @@ def staff_detail(request, staff_id):
         fields only; password data is never added to the context.
     """
     staff = get_object_or_404(Staff.objects.select_related("user"), pk=staff_id)
-    return render(request, "dashboard/staff_detail.html", {"staff": staff})
+    return render(
+        request,
+        "dashboard/staff_detail.html",
+        {"staff": staff, "is_super_admin": True, "active_nav": "staff"},
+    )
 
 
 @superadmin_required
@@ -167,7 +181,11 @@ def edit_staff(request, staff_id):
             return redirect("dashboard:staff_detail", staff_id=staff.id)
     else:
         form = StaffEditForm(instance=staff)
-    return render(request, "dashboard/edit_staff.html", {"form": form, "staff": staff})
+    return render(
+        request,
+        "dashboard/edit_staff.html",
+        {"form": form, "staff": staff, "is_super_admin": True, "active_nav": "staff"},
+    )
 
 
 @superadmin_required
@@ -195,19 +213,115 @@ def reset_staff_password(request, staff_id):
     return render(
         request,
         "dashboard/reset_staff_password.html",
-        {"form": form, "staff": staff},
+        {"form": form, "staff": staff, "is_super_admin": True, "active_nav": "staff"},
     )
 
 
-@staff_required
+def dashboard_access_required(view):
+    """Allow authenticated superusers or active staff to access dashboard pages."""
+
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect("accounts:login")
+        if request.user.is_superuser:
+            request.staff_profile = None
+            request.is_super_admin = True
+            return view(request, *args, **kwargs)
+        staff = Staff.objects.filter(
+            user=request.user, is_active=True, user__is_active=True
+        ).first()
+        if staff is None:
+            raise PermissionDenied
+        request.staff_profile = staff
+        request.is_super_admin = False
+        return view(request, *args, **kwargs)
+
+    return wrapped
+
+
 @never_cache
 def home(request):
-    """Render the authenticated Staff dashboard for the current profile.
+    """Render the dashboard entry point for the authenticated user's role.
 
-    Args:
-        request: A request authorized by ``staff_required``.
-
-    Returns:
-        The Staff dashboard response using the profile loaded by the decorator.
+    Super Admins are sent to the Super Admin dashboard. Active staff users see
+    the staff dashboard. Unauthenticated users are redirected to login and any
+    other authenticated account is denied access.
     """
-    return render(request, "dashboard/index.html", {"staff": request.staff_profile})
+    if not request.user.is_authenticated:
+        return redirect("accounts:login")
+    if request.user.is_superuser:
+        return redirect("dashboard:super_admin")
+
+    staff = Staff.objects.filter(
+        user=request.user, is_active=True, user__is_active=True
+    ).first()
+    if staff is None:
+        raise PermissionDenied
+
+    from fleet.models import Vehicle
+
+    context = {
+        "staff": staff,
+        "staff_profile": staff,
+        "is_super_admin": False,
+        "active_nav": "dashboard",
+        "vehicles": Vehicle.objects.all(),
+        **get_operational_metrics(),
+    }
+    return render(request, "dashboard/index.html", context)
+
+
+@dashboard_access_required
+@never_cache
+def trucks(request):
+    """Render the trucks overview and registered vehicle list."""
+    from fleet.models import Vehicle
+
+    context = {
+        "staff_profile": getattr(request, "staff_profile", None),
+        "is_super_admin": request.is_super_admin,
+        "active_nav": "trucks",
+        "vehicles": Vehicle.objects.all(),
+        **get_operational_metrics(),
+    }
+    return render(request, "dashboard/trucks.html", context)
+
+
+@dashboard_access_required
+@never_cache
+def drivers(request):
+    """Render the drivers overview for the current authorized role."""
+    context = {
+        "staff_profile": getattr(request, "staff_profile", None),
+        "is_super_admin": request.is_super_admin,
+        "active_nav": "drivers",
+        **get_operational_metrics(),
+    }
+    return render(request, "dashboard/drivers.html", context)
+
+
+@dashboard_access_required
+@never_cache
+def financial_overview(request):
+    """Render the financial overview for the current authorized role."""
+    context = {
+        "staff_profile": getattr(request, "staff_profile", None),
+        "is_super_admin": request.is_super_admin,
+        "active_nav": "financial",
+        **get_operational_metrics(),
+    }
+    return render(request, "dashboard/financial.html", context)
+
+
+@dashboard_access_required
+@never_cache
+def audit_logs(request):
+    """Render recent audit logs for the current authorized role."""
+    context = {
+        "staff_profile": getattr(request, "staff_profile", None),
+        "is_super_admin": request.is_super_admin,
+        "active_nav": "audit",
+        **get_operational_metrics(),
+    }
+    return render(request, "dashboard/audit_logs.html", context)

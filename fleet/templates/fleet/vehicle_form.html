@@ -1,0 +1,79 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Add Vehicle | KKR Transport{% endblock %}
+{% block page_eyebrow %}Fleet{% endblock %}
+{% block page_title %}Add Vehicle{% endblock %}
+
+{% block dashboard_content %}
+<div class="vehicle-form-page">
+  <section class="panel vehicle-form-card">
+    <div class="vehicle-form-header">
+      <h2>Register New Vehicle</h2>
+      <p class="muted">Enter vehicle and document details to add a new truck to Fleet Records.</p>
+    </div>
+
+    <form method="post" class="auth-form vehicle-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="form-error">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="vehicle-form-section">
+        <h3 class="vehicle-section-title">Vehicle Information</h3>
+        <div class="vehicle-form-grid">
+          <div class="field">
+            <label for="{{ form.vehicle_number.id_for_label }}">{{ form.vehicle_number.label }}</label>
+            {{ form.vehicle_number }}
+            {% for error in form.vehicle_number.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="field">
+            <label for="{{ form.vehicle_make.id_for_label }}">{{ form.vehicle_make.label }}</label>
+            {{ form.vehicle_make }}
+            {% for error in form.vehicle_make.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="field">
+            <label for="{{ form.vehicle_model.id_for_label }}">{{ form.vehicle_model.label }}</label>
+            {{ form.vehicle_model }}
+            {% for error in form.vehicle_model.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="field">
+            <label for="{{ form.manufacturing_year.id_for_label }}">{{ form.manufacturing_year.label }}</label>
+            {{ form.manufacturing_year }}
+            {% for error in form.manufacturing_year.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="field vehicle-field-full">
+            <label for="{{ form.wheel_configuration.id_for_label }}">{{ form.wheel_configuration.label }}</label>
+            {{ form.wheel_configuration }}
+            {% for error in form.wheel_configuration.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="vehicle-form-section">
+        <h3 class="vehicle-section-title">Document Information</h3>
+        <div class="vehicle-form-grid">
+          <div class="field">
+            <label for="{{ form.fc_expiry_date.id_for_label }}">{{ form.fc_expiry_date.label }}</label>
+            {{ form.fc_expiry_date }}
+            {% for error in form.fc_expiry_date.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="field">
+            <label for="{{ form.insurance_expiry_date.id_for_label }}">{{ form.insurance_expiry_date.label }}</label>
+            {{ form.insurance_expiry_date }}
+            {% for error in form.insurance_expiry_date.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="field vehicle-field-full">
+            <label for="{{ form.pollution_certificate_expiry_date.id_for_label }}">{{ form.pollution_certificate_expiry_date.label }}</label>
+            {{ form.pollution_certificate_expiry_date }}
+            {% for error in form.pollution_certificate_expiry_date.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions vehicle-form-actions">
+        <button type="submit">Save Vehicle</button>
+        <a class="button-link secondary-button" href="{% url 'dashboard:trucks' %}">Cancel</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

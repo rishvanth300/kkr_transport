@@ -1,0 +1,22 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Add Driver | KKR Transport{% endblock %}
+{% block page_eyebrow %}Operations{% endblock %}
+{% block page_title %}Add Driver{% endblock %}
+
+{% block dashboard_content %}
+<section class="panel form-panel">
+  <div class="panel-header">
+    <div>
+      <h2>Driver registration</h2>
+      <p class="muted">Dedicated driver registration entry point.</p>
+    </div>
+  </div>
+  <div class="empty-state compact">
+    <strong>Driver registration module coming soon</strong>
+    <p>Driver registration functionality is being prepared and will be implemented separately from vehicle registration. Use the navigation to return to driver or fleet overviews.</p>
+  </div>
+  <div class="form-actions">
+    <a class="button-link secondary-button" href="{% url 'dashboard:drivers' %}">Back to drivers</a>
+  </div>
+</section>
+{% endblock %}

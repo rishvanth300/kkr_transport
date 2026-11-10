@@ -1,3 +1,12 @@
-"""Fleet URLs (M-03 vehicles, M-04 drivers) — structure only."""
+"""Fleet URLs for vehicle and driver management."""
 
-urlpatterns = []
+from django.urls import path
+
+from . import views
+
+app_name = "fleet"
+
+urlpatterns = [
+    path("vehicles/add/", views.vehicle_add, name="vehicle_add"),
+    path("drivers/add/", views.driver_add, name="driver_add"),
+]
