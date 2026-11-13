@@ -1,0 +1,33 @@
+﻿{% extends "dashboard/layout.html" %}
+{% block title %}Record Driver Advance | KKR Transport{% endblock %}
+{% block page_eyebrow %}Trips{% endblock %}
+{% block page_title %}Record Driver Advance{% endblock %}
+
+{% block dashboard_content %}
+<section class="panel form-panel">
+  <div class="panel-header">
+    <div><h2>Driver Advance Transaction</h2><p class="muted">Record an advance as a separate financial transaction. Optionally allocate part/all to a trip's outstanding bata. Advances are not counted as trip expenses.</p></div>
+  </div>
+  <form method="post" class="stack-form" novalidate data-enter-nav="1">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<p class="message error">{{ form.non_field_errors|striptags }}</p>{% endif %}
+    <div class="form-grid">
+      <div class="field {% if form.driver.errors %}has-error{% endif %}"><label for="{{ form.driver.id_for_label }}">Driver</label>{{ form.driver }}{% if form.driver.errors %}<p class="field-error">{{ form.driver.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.amount.errors %}has-error{% endif %}"><label for="{{ form.amount.id_for_label }}">Advance Amount (₹)</label>{{ form.amount }}{% if form.amount.errors %}<p class="field-error">{{ form.amount.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.payment_date.errors %}has-error{% endif %}"><label for="{{ form.payment_date.id_for_label }}">Payment Date</label>{{ form.payment_date }}{% if form.payment_date.errors %}<p class="field-error">{{ form.payment_date.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.payment_method.errors %}has-error{% endif %}"><label for="{{ form.payment_method.id_for_label }}">Payment Method</label>{{ form.payment_method }}{% if form.payment_method.errors %}<p class="field-error">{{ form.payment_method.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.reference.errors %}has-error{% endif %}"><label for="{{ form.reference.id_for_label }}">Reference</label>{{ form.reference }}{% if form.reference.errors %}<p class="field-error">{{ form.reference.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.description.errors %}has-error{% endif %}"><label for="{{ form.description.id_for_label }}">Description</label>{{ form.description }}{% if form.description.errors %}<p class="field-error">{{ form.description.errors|striptags }}</p>{% endif %}</div>
+    </div>
+    <div class="panel-header" style="margin-top:1rem;"><div><h3>Optional Allocation</h3><p class="muted">Allocate against a specific trip's outstanding bata (partial allowed). You can allocate remaining balance later.</p></div></div>
+    <div class="form-grid">
+      <div class="field {% if form.allocate_trip.errors %}has-error{% endif %}"><label for="{{ form.allocate_trip.id_for_label }}">Allocate to Trip</label>{{ form.allocate_trip }}{% if form.allocate_trip.errors %}<p class="field-error">{{ form.allocate_trip.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.allocate_amount.errors %}has-error{% endif %}"><label for="{{ form.allocate_amount.id_for_label }}">Allocation Amount (₹)</label>{{ form.allocate_amount }}{% if form.allocate_amount.errors %}<p class="field-error">{{ form.allocate_amount.errors|striptags }}</p>{% endif %}</div>
+    </div>
+    <div class="form-actions">
+      <button type="submit">Save Advance</button>
+      <a class="button-link secondary-button" href="{% url 'trips:driver_finance' %}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

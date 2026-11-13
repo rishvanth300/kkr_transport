@@ -171,9 +171,14 @@ h1 { margin: 0; color: var(--primary-navy); font-size: clamp(1.8rem, 5vw, 2.3rem
 .field label { display: block; margin-bottom: 0.4rem; color: var(--text-primary); font-size: 0.9rem; font-weight: 650; }
 .input-with-icon { position: relative; display: flex; align-items: center; }
 .input-with-icon > span { position: absolute; left: 0.9rem; color: var(--secondary-blue); font-size: 0.9rem; }
-.field input, .field select { width: 100%; min-height: 2.85rem; padding: 0.75rem 0.9rem; border: 1px solid #c9dfed; border-radius: 10px; color: var(--text-primary); background: #fff; font: inherit; line-height: 1.4; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.field input, .field select, .field textarea { width: 100%; min-height: 2.85rem; padding: 0.75rem 0.9rem; border: 1px solid #c9dfed; border-radius: 10px; color: var(--text-primary); background: #fff; font: inherit; line-height: 1.4; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.field textarea { min-height: 6rem; resize: vertical; }
 .input-with-icon input { padding: 0.8rem 2.7rem; }
-.field input:focus, .field select:focus { border-color: var(--peacock-blue); outline: 3px solid rgba(8, 127, 165, 0.14); }
+/* Remove number input spinners (keep keyboard entry and validation intact) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--peacock-blue); outline: 3px solid rgba(8, 127, 165, 0.14); }
 .field select { appearance: auto; }
 .password-toggle { position: absolute; right: 0.5rem; width: auto; padding: 0.3rem 0.4rem; color: var(--secondary-blue); background: transparent; font-size: 0.75rem; }
 .password-toggle:hover { color: var(--teal); background: transparent; }
@@ -183,6 +188,8 @@ button:hover, .button-link:hover { background: linear-gradient(110deg, var(--pri
 .button-link { display: inline-block; padding: 0.82rem 1rem; text-decoration: none; }
 .login-button.is-loading { opacity: 0.7; cursor: wait; }
 .form-error { margin-bottom: 1rem !important; color: #b42318; font-size: 0.9rem; }
+.field-error { margin: 0.35rem 0 0; color: #b42318; font-size: 0.82rem; }
+.field.has-error input, .field.has-error select, .field.has-error textarea { border-color: #e08a8a; background: #fff8f8; }
 .auth-note { margin: 1.5rem 0 0; color: var(--text-secondary); font-size: 0.8rem; text-align: center; }
 
 .dashboard-page, .form-page { padding: 2rem; background: rgba(255, 255, 255, 0.95); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 10px 30px rgba(8, 45, 89, 0.06); }
@@ -329,7 +336,10 @@ td form button { width: auto; padding: 0.45rem 0.7rem; font-size: 0.8rem; }
 
 .chart-wrap { position: relative; height: 260px; margin: 0.5rem 0 1rem; }
 .form-panel { max-width: 760px; }
-.form-grid { max-width: 560px; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.2rem 1rem; max-width: 100%; }
+.form-grid .field { margin-bottom: 0.95rem; min-width: 0; }
+.form-grid .field-span-2, .form-grid .field[style*="grid-column: 1 / -1"] { grid-column: 1 / -1; }
+.stack-form .form-grid { max-width: 100%; }
 .form-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-top: 0.5rem; }
 .form-actions .button-link, .form-actions button { width: auto; min-width: 160px; text-align: center; }
 
@@ -352,40 +362,37 @@ td form button { width: auto; padding: 0.45rem 0.7rem; font-size: 0.8rem; }
 .detail-list dd { margin: 0; color: var(--text-primary); font-weight: 600; }
 .panel .muted { margin-bottom: 0.6rem; }
 
-@media (max-width: 1024px) {
-  html { height: auto; overflow-x: hidden; overflow-y: auto; }
-  body.app-body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
-  .app-body main { height: auto !important; max-height: none !important; min-height: 100dvh; overflow: visible !important; padding: 0; }
-  .app-shell { grid-template-columns: 1fr; height: auto !important; max-height: none !important; min-height: 0; overflow: visible !important; display: block; }
-  .app-main { height: auto !important; max-height: none !important; min-height: 0; overflow: visible !important; display: block; }
-  .page-content { height: auto !important; max-height: none !important; min-height: 0; overflow-x: hidden; overflow-y: visible !important; flex: none; }
-  .topbar { position: sticky; top: 0; z-index: 20; }
+@media (max-width: 767px) {
+  html { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+  body.app-body { height: auto; min-height: 100dvh; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  body.app-body:not(.sidebar-open) { overflow-y: auto !important; touch-action: auto !important; }
+  .app-body main { width: 100%; height: auto !important; max-height: none !important; min-height: 100dvh; padding: 0; overflow: visible !important; }
+  .app-shell { display: block; grid-template-columns: 1fr; height: auto !important; max-height: none !important; min-height: 0; overflow: visible !important; }
+  .app-main { display: block; height: auto !important; max-height: none !important; min-height: 0; overflow: visible !important; }
+  .page-content { display: block; flex: none; height: auto !important; max-height: none !important; min-height: 0; overflow-x: hidden; overflow-y: visible !important; padding: 1rem; max-width: 100%; overscroll-behavior: auto; }
+  .topbar { position: sticky; top: 0; z-index: 20; padding: 0.85rem 1rem; }
   .sidebar {
-    position: fixed; left: 0; top: 0; bottom: 0; width: min(86vw, 300px); height: 100dvh; max-height: 100dvh; transform: translateX(-105%);
-    transition: transform 0.25s ease; box-shadow: var(--shadow); overflow: hidden;
+    position: fixed; left: 0; top: 0; bottom: 0; width: min(88vw, 320px); height: 100dvh; max-height: 100dvh; transform: translateX(-105%);
+    transition: transform 0.25s ease; box-shadow: var(--shadow); overflow: hidden; padding: 1rem 0.85rem; z-index: 40;
   }
   .sidebar.is-open { transform: translateX(0); }
   .sidebar-close, .icon-button { display: inline-flex; align-items: center; justify-content: center; }
   .sidebar-backdrop {
-    display: block; position: fixed; inset: 0; background: rgba(20,43,69,0.35); opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 30;
+    display: block; position: fixed; inset: 0; background: rgba(20,43,69,0.35); opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.2s ease; z-index: 30;
   }
-  body.sidebar-open .sidebar-backdrop { opacity: 1; pointer-events: auto; }
+  body.sidebar-open .sidebar-backdrop { opacity: 1; visibility: visible; pointer-events: auto; }
   body.sidebar-open { overflow: hidden !important; touch-action: none; }
-  .dashboard-grid.two-col { grid-template-columns: 1fr; }
-}
-@media (max-width: 767px) {
-  .app-body main { padding: 0; }
-  .app-shell, .app-main, .page-content { max-width: 100%; }
-  .page-content { padding: 1rem; }
-  .topbar { padding: 0.85rem 1rem; }
+  .app-shell, .app-main { max-width: 100%; }
   .profile-chip { display: none; }
   .panel { padding: 1rem 0.9rem 0.5rem; }
   .panel-header { flex-direction: column; align-items: stretch; }
+  .dashboard-grid.two-col { grid-template-columns: 1fr; }
   .detail-list > div { grid-template-columns: 1fr; gap: 0.1rem; }
+  .form-grid { grid-template-columns: 1fr; gap: 0; }
+  .form-grid .field-span-2, .form-grid .field[style*="grid-column: 1 / -1"] { grid-column: auto; }
   .form-actions { flex-direction: column; align-items: stretch; }
-  .form-actions .button-link, .form-actions button { width: 100%; text-align: center; }
+  .form-actions .button-link, .form-actions button { width: 100%; min-width: 0; text-align: center; }
   .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; }
-  .sidebar { width: min(88vw, 320px); padding: 1rem 0.85rem; }
   .sidebar-brand { min-height: 4.6rem; padding: 0.3rem 2.25rem 0.85rem; }
   .sidebar-logo { max-width: 170px; max-height: 58px; }
   .nav-link { font-size: 0.92rem; }
@@ -393,6 +400,12 @@ td form button { width: auto; padding: 0.45rem 0.7rem; font-size: 0.8rem; }
   .vehicle-form-grid { grid-template-columns: 1fr; gap: 0; }
   .vehicle-field-full { grid-column: auto; }
   .vehicle-form-actions { justify-content: stretch; }
+  .table-wrap { max-width: 100%; }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 /* mobile overrides consolidated above; keep small-screen tweaks */
 

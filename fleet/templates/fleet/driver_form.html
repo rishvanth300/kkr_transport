@@ -1,0 +1,75 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}{% if is_edit %}Edit Driver{% else %}Add Driver{% endif %} | KKR Transport{% endblock %}
+{% block page_eyebrow %}Operations{% endblock %}
+{% block page_title %}{% if is_edit %}Edit Driver{% else %}Add Driver{% endif %}{% endblock %}
+
+{% block dashboard_content %}
+<div class="vehicle-form-page">
+  <section class="panel vehicle-form-card">
+    <div class="vehicle-form-header">
+      <h2>{{ form_title }}</h2>
+      <p class="muted">{% if is_edit %}Update driver details and vehicle assignment. Changes are saved to the existing driver record.{% else %}Enter driver details and assign an available truck. Assignment can be changed later.{% endif %}</p>
+    </div>
+
+    <form method="post" class="auth-form vehicle-form" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="form-error">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="vehicle-form-section">
+        <h3 class="vehicle-section-title">Driver Information</h3>
+        <div class="vehicle-form-grid">
+          <div class="field">
+            <label for="{{ form.driver_name.id_for_label }}">{{ form.driver_name.label }}</label>
+            {{ form.driver_name }}
+            {% for error in form.driver_name.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="field">
+            <label for="{{ form.mobile_number.id_for_label }}">{{ form.mobile_number.label }}</label>
+            {{ form.mobile_number }}
+            {% for error in form.mobile_number.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="field">
+            <label for="{{ form.alternate_mobile_number.id_for_label }}">{{ form.alternate_mobile_number.label }}</label>
+            {{ form.alternate_mobile_number }}
+            {% for error in form.alternate_mobile_number.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="field vehicle-field-full">
+            <label for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
+            {{ form.address }}
+            {% for error in form.address.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="field">
+            <label for="{{ form.driving_licence_number.id_for_label }}">{{ form.driving_licence_number.label }}</label>
+            {{ form.driving_licence_number }}
+            {% for error in form.driving_licence_number.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+          <div class="field">
+            <label for="{{ form.licence_expiry_date.id_for_label }}">{{ form.licence_expiry_date.label }}</label>
+            {{ form.licence_expiry_date }}
+            {% for error in form.licence_expiry_date.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="vehicle-form-section">
+        <h3 class="vehicle-section-title">Vehicle Assignment</h3>
+        <div class="vehicle-form-grid">
+          <div class="field vehicle-field-full">
+            <label for="{{ form.assigned_vehicle.id_for_label }}">{{ form.assigned_vehicle.label }}</label>
+            {{ form.assigned_vehicle }}
+            <p class="muted" style="margin:0.35rem 0 0;font-size:0.85rem;">Select a registered truck from the database. Leave unselected to keep/manage assignment later.</p>
+            {% for error in form.assigned_vehicle.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions vehicle-form-actions">
+        <button type="submit">{{ submit_label }}</button>
+        <a class="button-link secondary-button" href="{% if is_edit %}{% url 'fleet:driver_detail' driver.pk %}{% else %}{% url 'dashboard:drivers' %}{% endif %}">Cancel</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

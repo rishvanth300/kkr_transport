@@ -30,12 +30,13 @@
             <th>FC Expiry</th>
             <th>Insurance Expiry</th>
             <th>Pollution Expiry</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for v in vehicles %}
           <tr>
-            <td>{{ v.vehicle_number }}</td>
+            <td><a href="{% url 'fleet:vehicle_detail' v.pk %}">{{ v.vehicle_number }}</a></td>
             <td>{{ v.vehicle_make }}</td>
             <td>{{ v.vehicle_model }}</td>
             <td>{{ v.manufacturing_year }}</td>
@@ -43,9 +44,10 @@
             <td>{{ v.fc_expiry_date|date:"d M Y" }}</td>
             <td>{{ v.insurance_expiry_date|date:"d M Y" }}</td>
             <td>{{ v.pollution_certificate_expiry_date|date:"d M Y" }}</td>
+            <td class="actions-cell"><a href="{% url 'fleet:vehicle_detail' v.pk %}">View</a> | <a href="{% url 'fleet:vehicle_financial' v.pk %}">Financial</a></td>
           </tr>
           {% endfor %}
-        </tbody>
+        </tbody>
       </table>
     </div>
   {% else %}

@@ -1,0 +1,42 @@
+﻿{% extends "dashboard/layout.html" %}
+{% block title %}Driver Finance | KKR Transport{% endblock %}
+{% block page_eyebrow %}Trips{% endblock %}
+{% block page_title %}Driver Finance{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-header" style="margin-bottom:1rem;">
+  <p class="muted" style="margin:0;">Balance Due = max(Driver Bata - (Advance Given + Other Payment), 0). Extra Advance = max(Total Paid - Driver Bata, 0).</p>
+  <div class="form-actions" style="margin-top:0;">
+    <a class="button-link" href="{% url 'trips:advance_create' %}">Record Driver Advance</a>
+    <a class="button-link" href="{% url 'trips:payment_create' %}">Record Payment</a>
+    <a class="button-link secondary-button" href="{% url 'trips:dashboard' %}">Trip Sheets</a>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Driver Financial Summary</h2><p class="muted">Advances and other payments reduce the balance due; trip-level allocations are preserved for settlement history.</p></div></div>
+  {% if summaries %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Driver</th><th>Driver Bata</th><th>Advance Given</th><th>Other Payment</th><th>Total Paid</th><th>Balance Due</th><th>Extra Advance</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for s in summaries %}
+        <tr>
+          <td>{{ s.driver.driver_name }}</td>
+          <td>₹ {{ s.driver_bata|floatformat:2 }}</td>
+          <td style="color:#075a91; font-weight:600;">₹ {{ s.advance_given|floatformat:2 }}</td>
+          <td>₹ {{ s.other_payment|floatformat:2 }}</td>
+          <td>₹ {{ s.total_paid|floatformat:2 }}</td>
+          <td style="color:{% if s.balance_due > 0 %}#b42318{% else %}#078a72{% endif %}; font-weight:600;">₹ {{ s.balance_due|floatformat:2 }}</td>
+          <td style="color:#b45309; font-weight:600;">₹ {{ s.extra_advance|floatformat:2 }}</td>
+          <td><a class="text-link" href="{% url 'trips:driver_finance_detail' s.driver.id %}">View Details</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><strong>No drivers found</strong><p>Add drivers to manage bata and payments.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -2,27 +2,61 @@
 
 {% block title %}Drivers | KKR Transport{% endblock %}
 {% block page_eyebrow %}Operations{% endblock %}
-{% block page_title %}Driver Overview{% endblock %}
+{% block page_title %}Driver Records{% endblock %}
 
 {% block dashboard_content %}
 <section class="panel">
   <div class="panel-header">
     <div>
-      <h2>Drivers</h2>
-      <p class="muted">Driver count and relevant driver information.</p>
+      <h2>Driver Records</h2>
+      <p class="muted">Registered drivers and current vehicle assignments. Total: {{ total_drivers|default:0 }}</p>
     </div>
     <div class="form-actions" style="margin-top:0;">
       <a class="button-link small" href="{% url 'fleet:driver_add' %}">Add Driver</a>
       <a class="button-link small secondary-button" href="{% url 'trips:add' %}">Add Trip Sheet</a>
     </div>
   </div>
-  {% if drivers_available %}
-    <p class="muted">Driver records are available in the system.</p>
+
+  {% if drivers %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Driver ID</th>
+            <th>Driver Name</th>
+            <th>Mobile Number</th>
+            <th>Driving Licence Number</th>
+            <th>Licence Expiry Date</th>
+            <th>Assigned Vehicle Number</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for driver in drivers %}
+          <tr>
+            <td>{{ driver.id }}</td>
+            <td>{{ driver.driver_name }}</td>
+            <td>{{ driver.mobile_number }}{% if driver.alternate_mobile_number %}<br><small class="muted">{{ driver.alternate_mobile_number }}</small>{% endif %}</td>
+            <td>{{ driver.driving_licence_number }}</td>
+            <td>{{ driver.licence_expiry_date|date:"d M Y" }}</td>
+            <td>{% if driver.assigned_vehicle %}{{ driver.assigned_vehicle.vehicle_number }}{% else %}—{% endif %}</td>
+            <td class="actions-cell">
+              <a href="{% url 'fleet:driver_detail' driver.pk %}">View</a>
+              <a href="{% url 'fleet:driver_edit' driver.pk %}">Edit</a>
+              <a href="{% url 'fleet:driver_edit' driver.pk %}">Change Vehicle</a>
+              <a href="{% url 'trips:driver_finance_detail' driver.id %}">Finance</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   {% else %}
     <div class="empty-state">
-      <strong>Driver registration entry point ready</strong>
-      <p>Driver registration is kept separate from vehicle registration. Use the Add Driver button to access the dedicated entry point. Driver records will be listed here when the driver module is implemented.</p>
+      <strong>No drivers registered yet</strong>
+      <p>Add a driver to start managing driver records and vehicle assignments. Both Super Admin and Staff can register and manage drivers.</p>
+      <a class="button-link small" href="{% url 'fleet:driver_add' %}">Add first driver</a>
     </div>
   {% endif %}
 </section>
-{% endblock %}
+{% endblock %}

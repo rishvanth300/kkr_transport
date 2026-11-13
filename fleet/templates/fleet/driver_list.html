@@ -1,0 +1,59 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Driver Records | KKR Transport{% endblock %}
+{% block page_eyebrow %}Operations{% endblock %}
+{% block page_title %}Driver Records{% endblock %}
+
+{% block dashboard_content %}
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Driver Records</h2>
+      <p class="muted">Registered drivers and assigned vehicles.</p>
+    </div>
+    <div class="form-actions" style="margin-top:0;">
+      <a class="button-link small" href="{% url 'fleet:driver_add' %}">Add Driver</a>
+    </div>
+  </div>
+
+  {% if drivers %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Driver ID</th>
+            <th>Driver Name</th>
+            <th>Mobile Number</th>
+            <th>Driving Licence Number</th>
+            <th>Licence Expiry Date</th>
+            <th>Assigned Vehicle Number</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for driver in drivers %}
+          <tr>
+            <td>{{ driver.id }}</td>
+            <td>{{ driver.driver_name }}</td>
+            <td>{{ driver.mobile_number }}</td>
+            <td>{{ driver.driving_licence_number }}</td>
+            <td>{{ driver.licence_expiry_date|date:"d M Y" }}</td>
+            <td>{% if driver.assigned_vehicle %}{{ driver.assigned_vehicle.vehicle_number }}{% else %}—{% endif %}</td>
+            <td class="actions-cell">
+              <a href="{% url 'fleet:driver_detail' driver.pk %}">View</a>
+              <a href="{% url 'fleet:driver_edit' driver.pk %}">Edit</a>
+              <a href="{% url 'fleet:driver_edit' driver.pk %}">Change Vehicle</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <strong>No drivers registered yet</strong>
+      <p>Add a driver to start managing driver records and vehicle assignments.</p>
+      <a class="button-link small" href="{% url 'fleet:driver_add' %}">Add Driver</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

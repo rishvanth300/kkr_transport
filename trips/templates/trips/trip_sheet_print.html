@@ -1,0 +1,65 @@
+﻿{% extends "base.html" %}
+{% block title %}Trip Sheet #{{ trip.id }} | Print{% endblock %}
+{% block body_class %}app-body{% endblock %}
+{% block content %}
+<div class="page-content" style="max-width:900px;margin:0 auto;padding:1rem;">
+  <div class="panel" style="margin-bottom:1rem;">
+    <div class="panel-header">
+      <div><h1 style="margin:0;">Trip Sheet #{{ trip.id }}</h1><p class="muted">KKR Transport - Trip Sheet Record</p></div>
+      <div class="form-actions" style="margin-top:0;"><button onclick="window.print()">Print Trip Sheet</button></div>
+    </div>
+  </div>
+  <section class="panel"><h2>Trip Information</h2>
+    <div class="detail-grid">
+      <div class="detail-item"><span class="detail-label">Trip ID</span><strong>#{{ trip.id }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Date</span><strong>{{ trip.trip_date }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Company</span><strong>{{ trip.company_name }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Vehicle Number</span><strong>{{ trip.vehicle.vehicle_number }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Driver</span><strong>{{ trip.driver.driver_name }}</strong></div>
+      <div class="detail-item"><span class="detail-label">From</span><strong>{{ trip.from_location }}</strong></div>
+      <div class="detail-item"><span class="detail-label">To</span><strong>{{ trip.to_location }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Load Type</span><strong>{{ trip.load_type|default:"—" }}</strong></div>
+    </div>
+  </section>
+  <section class="panel"><h2>Distance and Diesel</h2>
+    <div class="detail-grid">
+      <div class="detail-item"><span class="detail-label">Starting KM</span><strong>{{ trip.starting_km }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Closing KM</span><strong>{{ trip.closing_km }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Total Distance</span><strong>{{ trip.distance_km }} KM</strong></div>
+      <div class="detail-item"><span class="detail-label">Diesel Quantity</span><strong>{{ trip.diesel_quantity }} L</strong></div>
+      <div class="detail-item"><span class="detail-label">Diesel Price</span><strong>₹ {{ trip.diesel_price_per_litre|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Diesel Cost</span><strong>₹ {{ trip.diesel_cost|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Mileage</span><strong>{% if trip.mileage %}{{ trip.mileage }} KM/L{% else %}—{% endif %}</strong></div>
+    </div>
+  </section>
+  <section class="panel"><h2>Revenue and Expenses</h2>
+    <div class="detail-grid">
+      <div class="detail-item"><span class="detail-label">Revenue</span><strong>₹ {{ trip.total_revenue|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Diesel</span><strong>₹ {{ trip.diesel_cost|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Loading</span><strong>₹ {{ trip.loading_cost|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Unloading</span><strong>₹ {{ trip.unloading_cost|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Toll</span><strong>₹ {{ trip.toll_cost|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Driver Bata ({{ trip.bata_percentage|floatformat:2 }}%)</span><strong>₹ {{ trip.driver_bata|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Load Commission</span><strong>₹ {{ trip.load_commission|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Maintenance</span><strong>₹ {{ trip.maintenance_cost|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Other Expenses</span><strong>₹ {{ trip.other_expenses|floatformat:2 }}</strong></div>
+      <div class="detail-item" style="grid-column:1/-1;"><span class="detail-label">Other Note</span><strong>{{ trip.other_expense_note|default:"—" }}</strong></div>
+    </div>
+  </section>
+  <section class="panel"><h2>Final Financial Summary</h2>
+    <div class="detail-grid">
+      <div class="detail-item"><span class="detail-label">Total Revenue</span><strong>₹ {{ trip.total_revenue|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Total Expenses</span><strong>₹ {{ trip.total_cost|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Net Profit / Loss</span><strong>₹ {{ trip.profit|floatformat:2 }}</strong></div>
+    </div>
+  </section>
+  <section class="panel"><h2>Driver Settlement</h2>
+    <div class="detail-grid">
+      <div class="detail-item"><span class="detail-label">Bata Earned</span><strong>₹ {{ settlement.bata_earned|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Previous Outstanding</span><strong>₹ {{ settlement.previous_outstanding|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Advance Paid</span><strong>₹ {{ settlement.advance_paid|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Remaining Bata</span><strong>₹ {{ settlement.remaining_bata|floatformat:2 }}</strong></div>
+    </div>
+  </section>
+</div>
+{% endblock %}

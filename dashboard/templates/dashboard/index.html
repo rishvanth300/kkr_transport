@@ -4,6 +4,10 @@
 {% block page_eyebrow %}Staff{% endblock %}
 {% block page_title %}Operations Dashboard{% endblock %}
 
+{% block extra_head %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
 {% block dashboard_content %}
 <div class="panel-header" style="margin-bottom:1rem;">
   <p class="welcome-line" style="margin:0;">Welcome, <strong>{{ staff.display_name }}</strong>. Here is your operational overview.</p>
@@ -27,13 +31,13 @@
   </article>
   <article class="kpi-card accent-gold">
     <p class="kpi-label">Total Revenue / Amount</p>
-    <p class="kpi-value">{% if total_revenue is not None %}₹ {{ total_revenue }}{% else %}—{% endif %}</p>
-    <p class="kpi-meta">{% if financial_available %}Recorded revenue{% else %}Financial data not configured{% endif %}</p>
+    <p class="kpi-value">{% if financial_available %}₹ {{ total_revenue|floatformat:2 }}{% else %}—{% endif %}</p>
+    <p class="kpi-meta">{% if financial_available %}From trip records{% else %}No trip data yet{% endif %}</p>
   </article>
   <article class="kpi-card accent-emerald">
     <p class="kpi-label">Total Expenses</p>
-    <p class="kpi-value">{% if total_expenses is not None %}₹ {{ total_expenses }}{% else %}—{% endif %}</p>
-    <p class="kpi-meta">{% if financial_available %}Recorded expenses{% else %}Expense data not configured{% endif %}</p>
+    <p class="kpi-value">{% if financial_available %}₹ {{ total_expenses|floatformat:2 }}{% else %}—{% endif %}</p>
+    <p class="kpi-meta">{% if financial_available %}Trip costs{% else %}No trip data yet{% endif %}</p>
   </article>
 </section>
 
@@ -70,12 +74,18 @@
     <div class="panel-header">
       <div>
         <h2>Driver Overview</h2>
-        <p class="muted">Driver count and information available to staff.</p>
+        <p class="muted">Driver count, assignment status and quick access.</p>
       </div>
       <a href="{% url 'dashboard:drivers' %}" class="text-link">View drivers</a>
     </div>
     {% if drivers_available %}
-      <p>Driver records are available. Open the drivers section for details.</p>
+      <p><strong>{{ driver_visual.total|default:0 }}</strong> driver(s) registered.</p>
+      <div class="chart-wrap" style="height:220px; max-width:360px;"><canvas id="driverStatusChart"></canvas></div>
+      <div class="detail-grid" style="margin-top:0.75rem;">
+        <div class="detail-item"><span class="detail-label">Assigned</span><strong>{{ driver_visual.values.0|default:0 }}</strong></div>
+        <div class="detail-item"><span class="detail-label">Unassigned</span><strong>{{ driver_visual.values.1|default:0 }}</strong></div>
+      </div>
+      <div class="form-actions"><a class="button-link small" href="{% url 'fleet:driver_add' %}">Add Driver</a><a class="button-link small secondary-button" href="{% url 'dashboard:drivers' %}">View details</a></div>
     {% else %}
       <div class="empty-state compact">
         <strong>Driver registration prepared</strong>
@@ -90,18 +100,42 @@
   <div class="panel-header">
     <div>
       <h2>Financial Overview</h2>
-      <p class="muted">Revenue, amount summaries, and expense information available to staff.</p>
+      <p class="muted">Revenue, expenses and profit from actual trip records.</p>
     </div>
     <a href="{% url 'dashboard:financial' %}" class="text-link">Open details</a>
   </div>
   {% if financial_available %}
-    <div class="chart-wrap">
-      <canvas id="financeChart" aria-label="Financial summary chart" role="img"></canvas>
+    <div class="detail-grid" style="margin-bottom:1rem;">
+      <div class="detail-item"><span class="detail-label">Total Trips</span><strong>{{ total_trips|default:0 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Total Revenue</span><strong>₹ {{ total_revenue|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Total Expenses</span><strong>₹ {{ total_expenses|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Total Profit</span><strong>₹ {{ total_profit|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Diesel Expense</span><strong>₹ {{ total_diesel_expense|floatformat:2 }}</strong></div>
+      <div class="detail-item"><span class="detail-label">Pending Driver Bata</span><strong>₹ {{ pending_driver_bata|floatformat:2 }}</strong></div>
+    </div>
+    <div class="dashboard-grid two-col" style="margin-bottom:0;">
+      <section class="panel" style="margin-bottom:0;">
+        <div class="panel-header"><div><h3 style="margin:0;font-size:1rem;">Revenue / Expenses / Profit Trend</h3></div></div>
+        {% if chart_data.labels %}
+          <div class="chart-wrap" style="height:240px;"><canvas id="mainFinanceTrend"></canvas></div>
+        {% else %}
+          <div class="empty-state compact"><strong>No trend data</strong><p>Add trip sheets to populate this chart.</p></div>
+        {% endif %}
+      </section>
+      <section class="panel" style="margin-bottom:0;">
+        <div class="panel-header"><div><h3 style="margin:0;font-size:1rem;">Revenue by Vehicle</h3></div></div>
+        {% if vehicle_distribution.labels %}
+          <div class="chart-wrap" style="height:240px;"><canvas id="mainRevenueDonut"></canvas></div>
+        {% else %}
+          <div class="empty-state compact"><strong>No vehicle revenue data</strong><p>Trip records by vehicle will appear here.</p></div>
+        {% endif %}
+      </section>
     </div>
   {% else %}
     <div class="empty-state compact">
-      <strong>Financial data not available yet</strong>
-      <p>Revenue and expense records are not configured in the current database. Permitted financial summaries will appear here when data is available.</p>
+      <strong>No trip financial data yet</strong>
+      <p>Trip sheet records are required for revenue, expense and profit summaries. Use the Trip Sheets module to add records.</p>
+      <a class="button-link small" href="{% url 'trips:select_truck' %}">Add Trip Sheet</a>
     </div>
   {% endif %}
 </section>
@@ -134,4 +168,46 @@
     </div>
   {% endif %}
 </section>
+
+{{ chart_data|json_script:"main-chart-data" }}
+{{ vehicle_distribution|json_script:"main-vehicle-dist-data" }}
+{{ driver_visual|json_script:"main-driver-data" }}
+<script>
+(function(){
+  if (!window.Chart) return;
+  var colors = ['#075a91','#00a99d','#c7a34a','#087fa5','#078a72','#b42318','#647d96','#082d59','#f59e0b','#10b981','#6366f1','#ef4444'];
+  function byId(id){ return document.getElementById(id); }
+  function parse(id){ var el=byId(id); return el ? JSON.parse(el.textContent||'{}') : {}; }
+  var trend = parse('main-chart-data');
+  if (byId('mainFinanceTrend') && trend.labels && trend.labels.length) {
+    new Chart(byId('mainFinanceTrend'), {
+      type: 'bar',
+      data: { labels: trend.labels, datasets: [
+        { label: 'Revenue', data: trend.revenue || [], backgroundColor: 'rgba(7,90,145,0.7)' },
+        { label: 'Expenses', data: trend.expenses || [], backgroundColor: 'rgba(199,163,74,0.7)' },
+        { label: 'Profit', data: trend.profit || [], type: 'line', borderColor: '#078a72', backgroundColor: 'rgba(7,138,114,0.15)', tension: 0.2 }
+      ]},
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  }
+  var dist = parse('main-vehicle-dist-data');
+  if (byId('mainRevenueDonut') && dist.labels && dist.labels.length) {
+    new Chart(byId('mainRevenueDonut'), {
+      type: 'doughnut',
+      data: { labels: dist.labels, datasets: [{ data: dist.revenue || [], backgroundColor: dist.labels.map(function(_,i){return colors[i%colors.length];}) }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+  var drv = parse('main-driver-data');
+  if (byId('driverStatusChart')) {
+    var dlabels = drv.labels || ['Assigned','Unassigned'];
+    var dvals = drv.values || [0,0];
+    new Chart(byId('driverStatusChart'), {
+      type: 'doughnut',
+      data: { labels: dlabels, datasets: [{ data: dvals, backgroundColor: ['#078a72','#c7a34a'] }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+})();
+</script>
 {% endblock %}
