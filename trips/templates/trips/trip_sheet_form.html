@@ -1,0 +1,174 @@
+﻿{% extends "dashboard/layout.html" %}
+
+{% block title %}{% if is_edit %}Edit Trip Sheet{% else %}Add Trip Sheet{% endif %} | KKR Transport{% endblock %}
+{% block page_eyebrow %}Trips{% endblock %}
+{% block page_title %}{% if is_edit %}Edit Trip Sheet{% else %}Step 2: Enter Trip Details{% endif %}{% endblock %}
+
+{% block dashboard_content %}
+{% if selected_vehicle %}
+<section class="panel form-panel">
+  <div class="panel-header">
+    <div>
+      <h2>Selected Truck</h2>
+      <p class="muted">You can confirm or change the truck number below in trip details.</p>
+    </div>
+    <span class="status-pill ok">{{ selected_vehicle.vehicle_number }}</span>
+  </div>
+  <div class="detail-grid" style="margin-top:0.5rem;">
+    <div class="detail-item"><span class="detail-label">Vehicle Number</span><strong>{{ selected_vehicle.vehicle_number }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Make &amp; Model</span><strong>{{ selected_vehicle.vehicle_make }} {{ selected_vehicle.vehicle_model }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Wheel Configuration</span><strong>{{ selected_vehicle.get_wheel_configuration_display }}</strong></div>
+  </div>
+</section>
+{% endif %}
+
+<form method="post" class="stack-form" novalidate id="trip-sheet-form" data-enter-nav="1">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="message error">{{ form.non_field_errors|striptags }}</p>{% endif %}
+
+  <section class="panel form-panel">
+    <div class="panel-header"><div><h2>1. Trip Information</h2><p class="muted">Trip and route details.</p></div></div>
+    <div class="form-grid">
+      <div class="field {% if form.trip_date.errors %}has-error{% endif %}"><label for="{{ form.trip_date.id_for_label }}">Trip Date</label>{{ form.trip_date }}{% if form.trip_date.errors %}<p class="field-error">{{ form.trip_date.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.company_name.errors %}has-error{% endif %}"><label for="{{ form.company_name.id_for_label }}">Company Name</label>{{ form.company_name }}{% if form.company_name.errors %}<p class="field-error">{{ form.company_name.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.driver.errors %}has-error{% endif %}"><label for="{{ form.driver.id_for_label }}">Driver Name</label>{{ form.driver }}{% if form.driver.errors %}<p class="field-error">{{ form.driver.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.vehicle.errors %}has-error{% endif %}"><label for="{{ form.vehicle.id_for_label }}">Vehicle Number (Truck No)</label>{{ form.vehicle }}{% if form.vehicle.errors %}<p class="field-error">{{ form.vehicle.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.from_location.errors %}has-error{% endif %}"><label for="{{ form.from_location.id_for_label }}">From Location</label>{{ form.from_location }}{% if form.from_location.errors %}<p class="field-error">{{ form.from_location.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.to_location.errors %}has-error{% endif %}"><label for="{{ form.to_location.id_for_label }}">To Location</label>{{ form.to_location }}{% if form.to_location.errors %}<p class="field-error">{{ form.to_location.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.load_type.errors %}has-error{% endif %}"><label for="{{ form.load_type.id_for_label }}">Load Type</label>{{ form.load_type }}{% if form.load_type.errors %}<p class="field-error">{{ form.load_type.errors|striptags }}</p>{% endif %}</div>
+    </div>
+  </section>
+
+  <section class="panel form-panel">
+    <div class="panel-header"><div><h2>2. Kilometer Details</h2><p class="muted">Distance is calculated automatically (Closing KM - Starting KM). Mileage is not entered manually.</p></div></div>
+    <div class="form-grid">
+      <div class="field {% if form.starting_km.errors %}has-error{% endif %}"><label for="{{ form.starting_km.id_for_label }}">Starting KM</label>{{ form.starting_km }}{% if form.starting_km.errors %}<p class="field-error">{{ form.starting_km.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.closing_km.errors %}has-error{% endif %}"><label for="{{ form.closing_km.id_for_label }}">Closing KM</label>{{ form.closing_km }}{% if form.closing_km.errors %}<p class="field-error">{{ form.closing_km.errors|striptags }}</p>{% endif %}</div>
+      <div class="field"><label>Total Distance (KM)</label><input type="text" id="calc-distance" value="0.00" readonly></div>
+    </div>
+  </section>
+
+  <section class="panel form-panel">
+    <div class="panel-header"><div><h2>3. Revenue &amp; Driver Bata</h2><p class="muted">Driver Bata = Trip Revenue × Bata Percentage / 100 (stored per trip).</p></div></div>
+    <div class="form-grid">
+      <div class="field {% if form.total_revenue.errors %}has-error{% endif %}"><label for="{{ form.total_revenue.id_for_label }}">Total Revenue (₹)</label>{{ form.total_revenue }}{% if form.total_revenue.errors %}<p class="field-error">{{ form.total_revenue.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.bata_percentage.errors %}has-error{% endif %}"><label for="{{ form.bata_percentage.id_for_label }}">Bata Percentage (%)</label>{{ form.bata_percentage }}{% if form.bata_percentage.errors %}<p class="field-error">{{ form.bata_percentage.errors|striptags }}</p>{% endif %}</div>
+      <div class="field"><label>Driver Bata (₹, auto)</label><input type="text" id="calc-bata" value="0.00" readonly></div>
+    </div>
+  </section>
+
+  <section class="panel form-panel">
+    <div class="panel-header"><div><h2>4. Diesel Details</h2><p class="muted">Diesel cost and mileage are calculated automatically. Mileage shown only when diesel quantity &gt; 0.</p></div></div>
+    <div class="form-grid">
+      <div class="field {% if form.diesel_quantity.errors %}has-error{% endif %}"><label for="{{ form.diesel_quantity.id_for_label }}">Diesel Quantity (Litres)</label>{{ form.diesel_quantity }}{% if form.diesel_quantity.errors %}<p class="field-error">{{ form.diesel_quantity.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.diesel_price_per_litre.errors %}has-error{% endif %}"><label for="{{ form.diesel_price_per_litre.id_for_label }}">Diesel Price Per Litre (₹)</label>{{ form.diesel_price_per_litre }}{% if form.diesel_price_per_litre.errors %}<p class="field-error">{{ form.diesel_price_per_litre.errors|striptags }}</p>{% endif %}</div>
+      <div class="field"><label>Total Diesel Cost (₹)</label><input type="text" id="calc-diesel-cost" value="0.00" readonly></div>
+      <div class="field"><label>Mileage (KM/Litre)</label><input type="text" id="calc-mileage" value="—" readonly></div>
+    </div>
+  </section>
+
+  <section class="panel form-panel">
+    <div class="panel-header"><div><h2>5. Trip Expense Details</h2><p class="muted">All expenses are optional (default ₹0). Driver Bata is auto-calculated from revenue and percentage (included in trip cost).</p></div></div>
+    <div class="form-grid">
+      <div class="field {% if form.loading_cost.errors %}has-error{% endif %}"><label for="{{ form.loading_cost.id_for_label }}">Loading Cost (₹)</label>{{ form.loading_cost }}{% if form.loading_cost.errors %}<p class="field-error">{{ form.loading_cost.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.unloading_cost.errors %}has-error{% endif %}"><label for="{{ form.unloading_cost.id_for_label }}">Unloading Cost (₹)</label>{{ form.unloading_cost }}{% if form.unloading_cost.errors %}<p class="field-error">{{ form.unloading_cost.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.toll_cost.errors %}has-error{% endif %}"><label for="{{ form.toll_cost.id_for_label }}">Toll Cost (₹)</label>{{ form.toll_cost }}{% if form.toll_cost.errors %}<p class="field-error">{{ form.toll_cost.errors|striptags }}</p>{% endif %}</div>
+      <div class="field"><label>Driver Bata (₹, auto from %)</label><input type="text" id="calc-bata-expense" value="0.00" readonly></div>
+      <div class="field {% if form.load_commission.errors %}has-error{% endif %}"><label for="{{ form.load_commission.id_for_label }}">Load Commission (₹)</label>{{ form.load_commission }}{% if form.load_commission.errors %}<p class="field-error">{{ form.load_commission.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.maintenance_cost.errors %}has-error{% endif %}"><label for="{{ form.maintenance_cost.id_for_label }}">Maintenance Cost (₹)</label>{{ form.maintenance_cost }}{% if form.maintenance_cost.errors %}<p class="field-error">{{ form.maintenance_cost.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.other_expenses.errors %}has-error{% endif %}"><label for="{{ form.other_expenses.id_for_label }}">Other Expenses (₹)</label>{{ form.other_expenses }}{% if form.other_expenses.errors %}<p class="field-error">{{ form.other_expenses.errors|striptags }}</p>{% endif %}</div>
+      <div class="field {% if form.other_expense_note.errors %}has-error{% endif %}"><label for="{{ form.other_expense_note.id_for_label }}">Other Expenses Note</label>{{ form.other_expense_note }}{% if form.other_expense_note.errors %}<p class="field-error">{{ form.other_expense_note.errors|striptags }}</p>{% endif %}</div>
+    </div>
+  </section>
+
+  <section class="panel form-panel">
+    <div class="panel-header"><div><h2>6. Financial Summary (Live)</h2><p class="muted">Calculated automatically. Final values are recalculated on the server before saving.</p></div></div>
+    <div class="kpi-grid">
+      <article class="kpi-card accent-gold"><p class="kpi-label">Revenue</p><p class="kpi-value" id="sum-revenue">₹ 0.00</p></article>
+      <article class="kpi-card accent-blue"><p class="kpi-label">Total Diesel Cost</p><p class="kpi-value" id="sum-diesel">₹ 0.00</p></article>
+      <article class="kpi-card accent-teal"><p class="kpi-label">Other Expenses</p><p class="kpi-value" id="sum-other">₹ 0.00</p></article>
+      <article class="kpi-card accent-emerald"><p class="kpi-label">Total Trip Cost</p><p class="kpi-value" id="sum-total">₹ 0.00</p></article>
+      <article class="kpi-card"><p class="kpi-label">Expected Profit</p><p class="kpi-value" id="sum-profit">₹ 0.00</p><p class="kpi-meta" id="sum-profit-note">Profit/Loss</p></article>
+    </div>
+  </section>
+
+  <section class="panel form-panel">
+    <div class="panel-header"><div><h2>7. Driver Bata &amp; Advance Information</h2><p class="muted">Driver Bata is calculated from revenue percentage and included in trip cost. Driver advances are separate transactions recorded in Driver Finance and settled against bata (never double-counted in expenses/profit).</p></div></div>
+    <div class="detail-grid">
+      <div class="detail-item"><span class="detail-label">Driver Bata (this trip)</span><strong id="info-bata">₹ 0.00</strong></div>
+      <div class="detail-item"><span class="detail-label">Advance / Settlement</span><strong>Maintain separately in Driver Finance</strong></div>
+    </div>
+    <div class="form-actions">
+      <a class="button-link secondary-button" href="{% url 'trips:driver_finance' %}" target="_blank" rel="noopener">Open Driver Finance</a>
+    </div>
+  </section>
+
+  <div class="form-actions">
+    <button type="submit">{% if is_edit %}Update Trip Sheet{% else %}Save Trip Sheet{% endif %}</button>
+    {% if is_edit %}
+      <a class="button-link secondary-button" href="{% url 'trips:detail' trip.pk %}">Cancel</a>
+    {% else %}
+      <a class="button-link secondary-button" href="{% url 'trips:select_truck' %}">Back to Truck Selection</a>
+    {% endif %}
+  </div>
+</form>
+
+<script>
+(function() {
+  const $ = (id) => document.getElementById(id);
+  const val = (name) => {
+    const el = document.querySelector('[name="' + name + '"]');
+    const n = parseFloat(el ? el.value : 0);
+    return isNaN(n) ? 0 : n;
+  };
+  const fmt = (n) => '₹ ' + (Math.round((n + Number.EPSILON) * 100) / 100).toFixed(2);
+  function recalc() {
+    const start = val('starting_km'), close = val('closing_km');
+    const distance = Math.max(close - start, 0);
+    if ($('calc-distance')) $('calc-distance').value = distance.toFixed(2);
+
+    const revenue = val('total_revenue');
+    const bataPct = val('bata_percentage');
+    const bata = revenue * bataPct / 100;
+
+    const dQty = val('diesel_quantity'), dPrice = val('diesel_price_per_litre');
+    const dieselCost = dQty * dPrice;
+    if ($('calc-diesel-cost')) $('calc-diesel-cost').value = dieselCost.toFixed(2);
+    if ($('calc-mileage')) {
+      if (dQty > 0 && distance > 0) {
+        $('calc-mileage').value = (distance / dQty).toFixed(2);
+      } else {
+        $('calc-mileage').value = '—';
+      }
+    }
+    if ($('calc-bata')) $('calc-bata').value = bata.toFixed(2);
+    if ($('calc-bata-expense')) $('calc-bata-expense').value = bata.toFixed(2);
+
+    const loading = val('loading_cost'), unloading = val('unloading_cost'), toll = val('toll_cost');
+    const commission = val('load_commission'), maint = val('maintenance_cost'), other = val('other_expenses');
+    const otherExpensesTotal = loading + unloading + toll + bata + commission + maint + other;
+    const totalCost = dieselCost + otherExpensesTotal;
+    const profit = revenue - totalCost;
+
+    if ($('sum-revenue')) $('sum-revenue').textContent = fmt(revenue);
+    if ($('sum-diesel')) $('sum-diesel').textContent = fmt(dieselCost);
+    if ($('sum-other')) $('sum-other').textContent = fmt(otherExpensesTotal);
+    if ($('sum-total')) $('sum-total').textContent = fmt(totalCost);
+    if ($('sum-profit')) $('sum-profit').textContent = fmt(profit);
+    if ($('sum-profit-note')) {
+      $('sum-profit-note').textContent = profit < 0 ? 'Loss' : 'Profit';
+      $('sum-profit-note').style.color = profit < 0 ? '#b42318' : '';
+    }
+    if ($('info-bata')) $('info-bata').textContent = fmt(bata);
+  }
+  const form = document.getElementById('trip-sheet-form');
+  if (form) {
+    form.querySelectorAll('input, select').forEach(el => {
+      el.addEventListener('input', recalc);
+      el.addEventListener('change', recalc);
+    });
+  }
+  recalc();
+})();
+</script>
+{% endblock %}

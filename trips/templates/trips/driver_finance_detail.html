@@ -1,0 +1,104 @@
+﻿{% extends "dashboard/layout.html" %}
+{% block title %}{{ driver.driver_name }} Finance | KKR Transport{% endblock %}
+{% block page_eyebrow %}Trips{% endblock %}
+{% block page_title %}Driver Finance - {{ driver.driver_name }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-header" style="margin-bottom:1rem;">
+  <p class="muted" style="margin:0;">Driver-level balance: Total Paid = Advance Given + Other Payment, Balance Due = max(Driver Bata - Total Paid, 0), Extra Advance = max(Total Paid - Driver Bata, 0).</p>
+  <div class="form-actions" style="margin-top:0;">
+    <a class="button-link" href="{% url 'trips:advance_create' %}?driver={{ driver.id }}">Record Driver Advance</a>
+    <a class="button-link" href="{% url 'trips:payment_create' %}?driver={{ driver.id }}">Record Payment</a>
+    <a class="button-link secondary-button" href="{% url 'trips:driver_finance' %}">All Drivers</a>
+  </div>
+</div>
+
+<section class="kpi-grid">
+  <article class="kpi-card accent-gold"><p class="kpi-label">Driver Bata</p><p class="kpi-value">₹ {{ summary.driver_bata|floatformat:2 }}</p><p class="kpi-meta">Total bata earned</p></article>
+  <article class="kpi-card accent-blue"><p class="kpi-label">Advance Given</p><p class="kpi-value" style="color:#075a91;">₹ {{ summary.advance_given|floatformat:2 }}</p><p class="kpi-meta">Advance transactions</p></article>
+  <article class="kpi-card"><p class="kpi-label">Other Payment</p><p class="kpi-value">₹ {{ summary.other_payment|floatformat:2 }}</p><p class="kpi-meta">Other payment records</p></article>
+  <article class="kpi-card accent-teal"><p class="kpi-label">Total Paid</p><p class="kpi-value">₹ {{ summary.total_paid|floatformat:2 }}</p><p class="kpi-meta">Advance Given + Other Payment</p></article>
+  <article class="kpi-card accent-emerald"><p class="kpi-label">Balance Due</p><p class="kpi-value" style="color:{% if summary.balance_due > 0 %}#b42318{% else %}#078a72{% endif %};">₹ {{ summary.balance_due|floatformat:2 }}</p><p class="kpi-meta">Driver Bata - Total Paid</p></article>
+  <article class="kpi-card"><p class="kpi-label">Extra Advance</p><p class="kpi-value" style="color:#b45309;">₹ {{ summary.extra_advance|floatformat:2 }}</p><p class="kpi-meta">Total Paid - Driver Bata</p></article>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Trip Bata History</h2><p class="muted">Trip-wise bata earned and settlement allocations (trip-level allocation history preserved).</p></div></div>
+  {% if summary.trip_rows %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Trip</th><th>Date</th><th>Vehicle</th><th>Company</th><th>Bata %</th><th>Driver Bata</th><th>Allocated (Trip Settlement)</th><th>Trip Outstanding</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for row in summary.trip_rows %}
+        <tr>
+          <td>#{{ row.trip.id }}</td>
+          <td>{{ row.trip.trip_date }}</td>
+          <td>{{ row.trip.vehicle.vehicle_number }}</td>
+          <td>{{ row.trip.company_name }}</td>
+          <td>{{ row.bata_percentage|floatformat:2 }}%</td>
+          <td>₹ {{ row.bata|floatformat:2 }}</td>
+          <td>₹ {{ row.settled|floatformat:2 }}</td>
+          <td>₹ {{ row.outstanding|floatformat:2 }}</td>
+          <td><a class="text-link" href="{% url 'trips:detail' row.trip.id %}">View Trip</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state compact"><strong>No trips found</strong><p>No trip sheets recorded for this driver yet.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Advance History</h2><p class="muted">Recorded driver advances (history preserved; advances count in Total Paid).</p></div></div>
+  {% if summary.advances %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Reference</th><th>Description</th><th>Allocated to Trips</th><th>Unallocated</th><th>Recorded By</th></tr></thead>
+      <tbody>
+        {% for a in summary.advances %}
+        <tr>
+          <td>{{ a.payment_date }}</td>
+          <td>₹ {{ a.amount|floatformat:2 }}</td>
+          <td>{{ a.get_payment_method_display }}</td>
+          <td>{{ a.reference|default:"-" }}</td>
+          <td>{{ a.description|default:"-" }}</td>
+          <td>₹ {{ a.allocated_amount|floatformat:2 }}</td>
+          <td>₹ {{ a.unallocated_amount|floatformat:2 }}</td>
+          <td>{{ a.recorded_by }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state compact"><strong>No advances recorded</strong><p>Record an advance payment for this driver when needed.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Payment History</h2><p class="muted">Other payment transactions recorded for this driver.</p></div></div>
+  {% if summary.payments %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Reference</th><th>Description</th><th>Recorded By</th></tr></thead>
+      <tbody>
+        {% for p in summary.payments %}
+        <tr>
+          <td>{{ p.payment_date }}</td>
+          <td>₹ {{ p.amount|floatformat:2 }}</td>
+          <td>{{ p.get_payment_method_display }}</td>
+          <td>{{ p.reference|default:"-" }}</td>
+          <td>{{ p.description|default:"-" }}</td>
+          <td>{{ p.recorded_by }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state compact"><strong>No other payments recorded</strong><p>Use Record Payment to add other payments for this driver.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

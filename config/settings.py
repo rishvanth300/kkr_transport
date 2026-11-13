@@ -81,3 +81,9 @@ SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_COOKIE_AGE = int(os.environ.get("SESSION_COOKIE_AGE", 60 * 60 * 8))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Trip/finance defaults
+# Default Driver Bata percentage of trip revenue (configurable). Stored per trip for history.
+from decimal import Decimal  # noqa: E402
+
+DEFAULT_DRIVER_BATA_PERCENTAGE = Decimal(os.environ.get("DEFAULT_DRIVER_BATA_PERCENTAGE", "15.00"))

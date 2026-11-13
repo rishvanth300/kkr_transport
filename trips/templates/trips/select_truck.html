@@ -1,0 +1,71 @@
+﻿{% extends "dashboard/layout.html" %}
+
+{% block title %}Select Truck | Trip Sheet{% endblock %}
+{% block page_eyebrow %}Trips{% endblock %}
+{% block page_title %}Add New Trip Sheet - Select Truck{% endblock %}
+
+{% block dashboard_content %}
+<section class="panel form-panel">
+  <div class="panel-header">
+    <div>
+      <h2>Step 1: Select Truck</h2>
+      <p class="muted">Choose the vehicle registration number before entering trip details. Vehicle numbers are loaded from the database.</p>
+    </div>
+    <div class="form-actions" style="margin-top:0;">
+      <a class="button-link secondary-button" href="{% url 'trips:dashboard' %}">Trip Sheets</a>
+    </div>
+  </div>
+
+  {% if vehicles %}
+  <form method="post" class="stack-form" id="truck-select-form" novalidate>
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="field {% if form.vehicle.errors %}has-error{% endif %}" style="grid-column: 1 / -1;">
+        <label for="{{ form.vehicle.id_for_label }}">Vehicle Number (Registration Number)</label>
+        {{ form.vehicle }}
+        {% if form.vehicle.errors %}<p class="field-error">{{ form.vehicle.errors|striptags }}</p>{% endif %}
+        <p class="muted" style="margin-top:0.4rem;">Registered trucks: {{ vehicles|length }}. Select a vehicle to open the Trip Sheet form immediately.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top:1rem;">
+      <table>
+        <thead><tr><th>Vehicle Number</th><th>Make</th><th>Model</th><th>Wheels</th><th>Action</th></tr></thead>
+        <tbody>
+          {% for v in vehicles %}
+          <tr>
+            <td><strong>{{ v.vehicle_number }}</strong></td>
+            <td>{{ v.vehicle_make }}</td>
+            <td>{{ v.vehicle_model }}</td>
+            <td>{{ v.get_wheel_configuration_display }}</td>
+            <td><a class="button-link small" href="{% url 'trips:create' %}?vehicle={{ v.id }}">Select</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="form-actions">
+      <a class="button-link secondary-button" href="{% url 'dashboard:home' %}">Cancel</a>
+    </div>
+  </form>
+  <script>
+    (function () {
+      var select = document.getElementById('{{ form.vehicle.id_for_label }}');
+      if (!select) return;
+      select.addEventListener('change', function () {
+        if (select.value) {
+          window.location.href = "{% url 'trips:create' %}?vehicle=" + encodeURIComponent(select.value);
+        }
+      });
+    })();
+  </script>
+  {% else %}
+  <div class="empty-state">
+    <strong>No vehicles available</strong>
+    <p>Register a vehicle before creating a trip sheet.</p>
+    <div class="form-actions"><a class="button-link" href="{% url 'fleet:vehicle_add' %}">Add Vehicle</a></div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

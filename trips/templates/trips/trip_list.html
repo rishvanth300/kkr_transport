@@ -1,0 +1,76 @@
+﻿{% extends "dashboard/layout.html" %}
+
+{% block title %}All Trip Sheets | KKR Transport{% endblock %}
+{% block page_eyebrow %}Trips{% endblock %}
+{% block page_title %}Trip Sheet List{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-header" style="margin-bottom:1rem;">
+  <p class="muted" style="margin:0;">All trip sheet records from the database.</p>
+  <div class="form-actions" style="margin-top:0;">
+    <a class="button-link" href="{% url 'trips:select_truck' %}">Add New Trip Sheet</a>
+    <a class="button-link secondary-button" href="{% url 'trips:export' %}?{{ request.GET.urlencode }}&next={{ request.path }}">Download Trip Sheets (Excel)</a>
+    <a class="button-link secondary-button" href="{% url 'trips:dashboard' %}">Trip Dashboard</a>
+  </div>
+</div>
+
+<section class="kpi-grid">
+  <article class="kpi-card accent-blue"><p class="kpi-label">Total Trips</p><p class="kpi-value">{{ summary.total_trips|default:0 }}</p></article>
+  <article class="kpi-card accent-gold"><p class="kpi-label">Total Revenue</p><p class="kpi-value">₹ {{ summary.total_revenue|floatformat:2 }}</p></article>
+  <article class="kpi-card accent-teal"><p class="kpi-label">Total Expenses</p><p class="kpi-value">₹ {{ summary.total_cost|floatformat:2 }}</p></article>
+  <article class="kpi-card accent-emerald"><p class="kpi-label">Total Profit</p><p class="kpi-value">₹ {{ summary.total_profit|floatformat:2 }}</p></article>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Search &amp; Filter</h2></div></div>
+  <form method="get" class="stack-form">
+    <div class="form-grid">
+      <div class="field"><label>Search</label><input type="text" name="q" value="{{ filters.q }}" placeholder="Driver, vehicle, company, route, trip ID"></div>
+      <div class="field"><label>Company</label><input type="text" name="company" value="{{ filters.company }}" placeholder="Company name"></div>
+      <div class="field"><label>Driver</label><select name="driver"><option value="">All drivers</option>{% for d in drivers %}<option value="{{ d.id }}" {% if filters.driver == d.id|stringformat:'s' %}selected{% endif %}>{{ d.driver_name }}</option>{% endfor %}</select></div>
+      <div class="field"><label>Vehicle</label><select name="vehicle"><option value="">All vehicles</option>{% for v in vehicles %}<option value="{{ v.id }}" {% if filters.vehicle == v.id|stringformat:'s' %}selected{% endif %}>{{ v.vehicle_number }}</option>{% endfor %}</select></div>
+      <div class="field"><label>Load Type</label><input type="text" name="load_type" value="{{ filters.load_type }}" placeholder="Load type"></div>
+      <div class="field"><label>Date From</label><input type="date" name="date_from" value="{{ filters.date_from }}"></div>
+      <div class="field"><label>Date To</label><input type="date" name="date_to" value="{{ filters.date_to }}"></div>
+      <div class="field"><label>Month</label><input type="number" min="1" max="12" name="month" value="{{ filters.month }}"></div>
+      <div class="field"><label>Year</label><input type="number" min="2000" max="2100" name="year" value="{{ filters.year }}"></div>
+    </div>
+    <div class="form-actions"><button type="submit">Apply</button><a class="button-link secondary-button" href="{% url 'trips:list' %}">Reset</a></div>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Trip Sheets</h2><p class="muted">{{ trips|length }} record(s)</p></div></div>
+  {% if trips %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Trip ID</th><th>Date</th><th>Vehicle Number</th><th>Company Name</th><th>Driver Name</th><th>From</th><th>To</th><th>Distance</th><th>Revenue</th><th>Total Cost</th><th>Profit</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for t in trips %}
+        <tr>
+          <td>#{{ t.id }}</td>
+          <td>{{ t.trip_date }}</td>
+          <td>{{ t.vehicle.vehicle_number }}</td>
+          <td>{{ t.company_name }}</td>
+          <td>{{ t.driver.driver_name }}</td>
+          <td>{{ t.from_location }}</td>
+          <td>{{ t.to_location }}</td>
+          <td>{{ t.distance_km }}</td>
+          <td>₹ {{ t.total_revenue|floatformat:2 }}</td>
+          <td>₹ {{ t.total_cost|floatformat:2 }}</td>
+          <td>₹ {{ t.profit|floatformat:2 }}</td>
+          <td><a class="text-link" href="{% url 'trips:detail' t.id %}">View</a> | <a class="text-link" href="{% url 'trips:edit' t.id %}">Edit</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <strong>No trip sheets found</strong>
+    <p>No records match the selected filters, or no trip sheets have been created yet.</p>
+    <div class="form-actions"><a class="button-link" href="{% url 'trips:select_truck' %}">Add Trip Sheet</a></div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -34,8 +34,14 @@
       </a>
 
       <p class="nav-label">Operations</p>
-      <a href="{% url 'trips:add' %}" class="nav-link {% if active_nav == 'trips' %}is-active{% endif %}">
+      <a href="{% url 'trips:dashboard' %}" class="nav-link {% if active_nav == 'trips' %}is-active{% endif %}">
+        <span class="nav-icon" aria-hidden="true">▣</span><span>Trip Sheets</span>
+      </a>
+      <a href="{% url 'trips:add' %}" class="nav-link sub-link">
         <span class="nav-icon" aria-hidden="true">＋</span><span>Add Trip Sheet</span>
+      </a>
+      <a href="{% url 'trips:driver_finance' %}" class="nav-link sub-link">
+        <span class="nav-icon" aria-hidden="true">₹</span><span>Driver Bata &amp; Advances</span>
       </a>
 
       {% if is_super_admin %}

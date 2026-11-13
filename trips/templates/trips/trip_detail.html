@@ -1,0 +1,114 @@
+﻿{% extends "dashboard/layout.html" %}
+
+{% block title %}Trip #{{ trip.id }} | KKR Transport{% endblock %}
+{% block page_eyebrow %}Trips{% endblock %}
+{% block page_title %}Trip Sheet Details{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-header" style="margin-bottom:1rem;">
+  <p class="muted" style="margin:0;">Complete revenue and expense breakdown for Trip #{{ trip.id }}.</p>
+  <div class="form-actions" style="margin-top:0;">
+    <a class="button-link" href="{% url 'trips:edit' trip.id %}">Edit</a>
+    <a class="button-link secondary-button" href="{% url 'trips:print' trip.id %}" target="_blank">Print / Download</a>
+    <a class="button-link secondary-button" href="{% url 'trips:list' %}">Back to List</a>
+    {% if is_super_admin %}
+    <form method="post" action="{% url 'trips:delete' trip.id %}" style="display:inline;" onsubmit="return confirm('Delete this trip sheet? This cannot be undone and is only allowed when no allocations exist.');">
+      {% csrf_token %}
+      <button type="submit" class="secondary-button">Delete</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Trip Information</h2></div></div>
+  <div class="detail-grid">
+    <div class="detail-item"><span class="detail-label">Trip ID</span><strong>#{{ trip.id }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Trip Date</span><strong>{{ trip.trip_date }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Company Name</span><strong>{{ trip.company_name }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Driver Name</span><strong>{{ trip.driver.driver_name }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Vehicle Number</span><strong>{{ trip.vehicle.vehicle_number }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Route</span><strong>{{ trip.from_location }} → {{ trip.to_location }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Load Type</span><strong>{{ trip.load_type|default:"—" }}</strong></div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Kilometer &amp; Diesel Details</h2></div></div>
+  <div class="detail-grid">
+    <div class="detail-item"><span class="detail-label">Starting KM</span><strong>{{ trip.starting_km }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Closing KM</span><strong>{{ trip.closing_km }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Total Distance (KM)</span><strong>{{ trip.distance_km }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Diesel Quantity (L)</span><strong>{{ trip.diesel_quantity }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Diesel Price / Litre</span><strong>₹ {{ trip.diesel_price_per_litre|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Total Diesel Cost</span><strong>₹ {{ trip.diesel_cost|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Mileage (KM/L)</span><strong>{% if trip.mileage %}{{ trip.mileage }}{% else %}—{% endif %}</strong></div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Revenue &amp; Expense Breakdown</h2></div></div>
+  <div class="detail-grid">
+    <div class="detail-item"><span class="detail-label">Total Revenue</span><strong>₹ {{ trip.total_revenue|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Loading Cost</span><strong>₹ {{ trip.loading_cost|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Unloading Cost</span><strong>₹ {{ trip.unloading_cost|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Toll Cost</span><strong>₹ {{ trip.toll_cost|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Driver Bata (%)</span><strong>{{ trip.bata_percentage|floatformat:2 }}%</strong></div>
+    <div class="detail-item"><span class="detail-label">Driver Bata</span><strong>₹ {{ trip.driver_bata|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Load Commission</span><strong>₹ {{ trip.load_commission|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Maintenance Cost</span><strong>₹ {{ trip.maintenance_cost|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Other Expenses</span><strong>₹ {{ trip.other_expenses|floatformat:2 }}</strong></div>
+    <div class="detail-item" style="grid-column:1/-1;"><span class="detail-label">Other Expense Note</span><strong>{{ trip.other_expense_note|default:"—" }}</strong></div>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Final Financial Summary</h2><p class="muted">Profit = Total Revenue - Total Trip Expenses (driver advances/settlements not included).</p></div></div>
+  <div class="kpi-grid">
+    <article class="kpi-card accent-gold"><p class="kpi-label">Total Revenue</p><p class="kpi-value">₹ {{ trip.total_revenue|floatformat:2 }}</p></article>
+    <article class="kpi-card accent-teal"><p class="kpi-label">Total Expenses</p><p class="kpi-value">₹ {{ trip.total_cost|floatformat:2 }}</p></article>
+    <article class="kpi-card accent-emerald"><p class="kpi-label">Net Profit / Loss</p><p class="kpi-value">₹ {{ trip.profit|floatformat:2 }}</p><p class="kpi-meta">{% if trip.profit < 0 %}Loss{% else %}Profit{% endif %}</p></article>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Driver Settlement</h2><p class="muted">Bata is a trip expense (revenue × %). Advances and settlements are separate transactions and never double-counted in company profit.</p></div></div>
+  <div class="detail-grid">
+    <div class="detail-item"><span class="detail-label">Bata Percentage (this trip)</span><strong>{{ trip.bata_percentage|floatformat:2 }}%</strong></div>
+    <div class="detail-item"><span class="detail-label">Bata Earned (this trip)</span><strong>₹ {{ settlement.bata_earned|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Previous Outstanding (other trips)</span><strong>₹ {{ settlement.previous_outstanding|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Settled / Allocated (this trip)</span><strong>₹ {{ settlement.advance_paid|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Remaining Bata (this trip)</span><strong>₹ {{ settlement.remaining_bata|floatformat:2 }}</strong></div>
+  </div>
+  {% if allocations %}
+  <div class="table-wrap" style="margin-top:0.75rem;">
+    <table>
+      <thead><tr><th>Allocation Date</th><th>Advance Ref</th><th>Amount</th><th>Recorded By</th><th>Note</th></tr></thead>
+      <tbody>
+        {% for a in allocations %}
+        <tr>
+          <td>{{ a.allocated_at }}</td>
+          <td>Advance #{{ a.advance_id }} ({{ a.advance.payment_date }})</td>
+          <td>₹ {{ a.amount_allocated|floatformat:2 }}</td>
+          <td>{{ a.allocated_by }}</td>
+          <td>{{ a.note|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state compact"><strong>No allocations recorded for this trip</strong><p>Record a driver advance and allocate it from Driver Finance if needed.</p></div>
+  {% endif %}
+  <div class="form-actions"><a class="button-link secondary-button" href="{% url 'trips:driver_finance_detail' trip.driver_id %}">Driver Finance</a></div>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Audit</h2></div></div>
+  <div class="detail-grid">
+    <div class="detail-item"><span class="detail-label">Created By</span><strong>{{ trip.created_by }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Created At</span><strong>{{ trip.created_at }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Updated At</span><strong>{{ trip.updated_at }}</strong></div>
+  </div>
+</section>
+{% endblock %}

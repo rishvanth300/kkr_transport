@@ -1,39 +1,190 @@
-{% extends "dashboard/layout.html" %}
+﻿{% extends "dashboard/layout.html" %}
 
 {% block title %}Financial Overview | KKR Transport{% endblock %}
 {% block page_eyebrow %}Finance{% endblock %}
-{% block page_title %}Financial Overview{% endblock %}
+{% block page_title %}Company-wide Financial Dashboard{% endblock %}
+
+{% block extra_head %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
 
 {% block dashboard_content %}
+<section class="panel">
+  <div class="panel-header"><div><h2>Date &amp; Record Filters</h2><p class="muted">Filter by period (daily, monthly, yearly, custom) and optional company/driver. Profit = Total Revenue − Total Trip Expenses (advances/settlements excluded).</p></div></div>
+  <form method="get" class="stack-form" id="finance-filter-form">
+    <div class="form-grid">
+      <div class="field"><label>Period</label>
+        <select name="period" id="filter-period">
+          <option value="" {% if not filters.period %}selected{% endif %}>All / Custom range</option>
+          <option value="daily" {% if filters.period == "daily" %}selected{% endif %}>Daily</option>
+          <option value="monthly" {% if filters.period == "monthly" %}selected{% endif %}>Monthly</option>
+          <option value="yearly" {% if filters.period == "yearly" %}selected{% endif %}>Yearly</option>
+          <option value="custom" {% if filters.period == "custom" %}selected{% endif %}>Custom Range</option>
+        </select>
+      </div>
+      <div class="field period-field period-daily"><label>Day</label><input type="date" name="day" value="{{ filters.day }}"></div>
+      <div class="field period-field period-monthly"><label>Month</label><input type="number" min="1" max="12" name="month" value="{{ filters.month }}" placeholder="1-12"></div>
+      <div class="field period-field period-monthly period-yearly"><label>Year</label><input type="number" min="2000" max="2100" name="year" value="{{ filters.year }}" placeholder="YYYY"></div>
+      <div class="field period-field period-custom"><label>Date From</label><input type="date" name="date_from" value="{{ filters.date_from }}"></div>
+      <div class="field period-field period-custom"><label>Date To</label><input type="date" name="date_to" value="{{ filters.date_to }}"></div>
+      <div class="field"><label>Company</label><input type="text" name="company" value="{{ filters.company }}" placeholder="Company name"></div>
+      <div class="field"><label>Driver</label><select name="driver"><option value="">All drivers</option>{% for d in drivers %}<option value="{{ d.id }}" {% if filters.driver == d.id|stringformat:'s' %}selected{% endif %}>{{ d.driver_name }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="form-actions">
+      <button type="submit">Apply Filters</button>
+      <a class="button-link secondary-button" href="{% url 'dashboard:financial' %}">Reset</a>
+      {% if resolved_date_from or resolved_date_to %}<span class="muted">Showing: {% if resolved_date_from %}{{ resolved_date_from }}{% endif %}{% if resolved_date_from and resolved_date_to %} to {% endif %}{% if resolved_date_to %}{{ resolved_date_to }}{% endif %}</span>{% endif %}
+    </div>
+  </form>
+</section>
+
 <section class="kpi-grid">
-  <article class="kpi-card accent-gold">
-    <p class="kpi-label">Total Revenue / Amount</p>
-    <p class="kpi-value">{% if total_revenue is not None %}₹ {{ total_revenue }}{% else %}—{% endif %}</p>
-    <p class="kpi-meta">{% if financial_available %}Recorded revenue{% else %}Not configured{% endif %}</p>
-  </article>
-  <article class="kpi-card accent-emerald">
-    <p class="kpi-label">Total Expenses</p>
-    <p class="kpi-value">{% if total_expenses is not None %}₹ {{ total_expenses }}{% else %}—{% endif %}</p>
-    <p class="kpi-meta">{% if financial_available %}Recorded expenses{% else %}Not configured{% endif %}</p>
-  </article>
+  <article class="kpi-card accent-gold"><p class="kpi-label">Total Revenue</p><p class="kpi-value">₹ {{ financial.total_revenue|floatformat:2 }}</p><p class="kpi-meta">Sum of trip revenue</p></article>
+  <article class="kpi-card accent-teal"><p class="kpi-label">Total Expenses</p><p class="kpi-value">₹ {{ financial.total_expenses|floatformat:2 }}</p><p class="kpi-meta">Trip expenses (bata included, advances excluded)</p></article>
+  <article class="kpi-card accent-emerald"><p class="kpi-label">Total Profit</p><p class="kpi-value">₹ {{ financial.total_profit|floatformat:2 }}</p><p class="kpi-meta">Revenue − Expenses</p></article>
+  <article class="kpi-card accent-blue"><p class="kpi-label">Total Trips</p><p class="kpi-value">{{ financial.total_trips|default:0 }}</p><p class="kpi-meta">Filtered trip records</p></article>
+  <article class="kpi-card accent-navy"><p class="kpi-label">Total Vehicles</p><p class="kpi-value">{{ financial.total_vehicles|default:0 }}</p><p class="kpi-meta">{{ financial.active_vehicles|default:0 }} with trips in filter</p></article>
+  <article class="kpi-card"><p class="kpi-label">Total Distance</p><p class="kpi-value">{{ financial.total_distance|floatformat:2 }} km</p><p class="kpi-meta">Closing − Starting KM</p></article>
+</section>
+
+<section class="dashboard-grid two-col" style="margin-bottom:1.25rem;">
+  <section class="panel" style="margin-bottom:0;">
+    <div class="panel-header"><div><h2>Revenue Distribution by Vehicle</h2><p class="muted">Values and percentages (filtered).</p></div></div>
+    {% if vehicle_distribution.labels %}
+      <div class="chart-wrap" style="height:300px;"><canvas id="revDonut"></canvas></div>
+    {% else %}<div class="empty-state compact"><strong>No revenue data</strong><p>No vehicle trips match the selected filters.</p></div>{% endif %}
+  </section>
+  <section class="panel" style="margin-bottom:0;">
+    <div class="panel-header"><div><h2>Expense Distribution by Vehicle</h2><p class="muted">Values and percentages (filtered).</p></div></div>
+    {% if vehicle_distribution.labels %}
+      <div class="chart-wrap" style="height:300px;"><canvas id="expDonut"></canvas></div>
+    {% else %}<div class="empty-state compact"><strong>No expense data</strong><p>No vehicle trips match the selected filters.</p></div>{% endif %}
+  </section>
+</section>
+<section class="panel">
+  <div class="panel-header"><div><h2>Profit Distribution by Vehicle</h2><p class="muted">Vehicle-wise profit values and share of positive profit (filtered).</p></div></div>
+  {% if vehicle_distribution.labels %}
+    <div class="chart-wrap" style="height:320px;"><canvas id="profitDonut"></canvas></div>
+  {% else %}<div class="empty-state compact"><strong>No profit data</strong><p>No vehicle trips match the selected filters.</p></div>{% endif %}
 </section>
 
 <section class="panel">
-  <div class="panel-header">
-    <div>
-      <h2>Revenue and Expenses</h2>
-      <p class="muted">Permitted financial summaries based on available records.</p>
-    </div>
-  </div>
-  {% if financial_available %}
-    <div class="chart-wrap">
-      <canvas id="financeChart" aria-label="Financial summary chart" role="img"></canvas>
-    </div>
+  <div class="panel-header"><div><h2>Vehicle-wise Financial Breakdown</h2><p class="muted">Revenue, expenses and profit per vehicle for the selected period.</p></div></div>
+  {% if vehicle_distribution.rows %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Vehicle</th><th>Revenue</th><th>Expenses</th><th>Profit</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for r in vehicle_distribution.rows %}
+      <tr>
+        <td>{{ r.vehicle_number }}</td>
+        <td>₹ {{ r.revenue|floatformat:2 }}</td>
+        <td>₹ {{ r.expenses|floatformat:2 }}</td>
+        <td>₹ {{ r.profit|floatformat:2 }}</td>
+        <td><a class="text-link" href="{% url 'fleet:vehicle_financial' r.vehicle_id %}">View Vehicle Dashboard</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
   {% else %}
-    <div class="empty-state">
-      <strong>Financial data not available yet</strong>
-      <p>Revenue and expense models/fields are not present in the current application database. Diesel/fuel expenses are maintained separately and will be calculated or displayed using actual Trip Sheet records in the upcoming Trip Sheet module. No dummy fuel costs are shown. This page will display summaries and charts when records exist.</p>
-    </div>
+  <div class="empty-state compact"><strong>No vehicle data</strong><p>No records available for the selected filters.</p></div>
   {% endif %}
 </section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Revenue, Expenses &amp; Profit Trend</h2><p class="muted">Time-series summary from actual trip records.</p></div></div>
+  {% if financial_available and chart_data.labels %}
+    <div class="chart-wrap"><canvas id="financeTrend" aria-label="Financial trend chart" role="img"></canvas></div>
+  {% else %}
+    <div class="empty-state"><strong>No financial trend data</strong><p>Add trip sheets or adjust filters to populate this chart.</p></div>
+  {% endif %}
+</section>
+
+<div class="dashboard-grid two-col">
+  <section class="panel">
+    <div class="panel-header"><div><h2>Highest-Profit Trips</h2><p class="muted">Top trips by profit (filtered).</p></div></div>
+    {% if top_profit_trips %}
+    <div class="table-wrap"><table><thead><tr><th>Trip</th><th>Date</th><th>Vehicle</th><th>Driver</th><th>Profit</th></tr></thead><tbody>
+      {% for t in top_profit_trips %}<tr><td><a class="text-link" href="{% url 'trips:detail' t.id %}">#{{ t.id }}</a></td><td>{{ t.trip_date }}</td><td>{{ t.vehicle.vehicle_number }}</td><td>{{ t.driver.driver_name }}</td><td>₹ {{ t.profit|floatformat:2 }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<div class="empty-state compact"><strong>No profit data</strong><p>No trips available for the selected filters.</p></div>{% endif %}
+  </section>
+  <section class="panel">
+    <div class="panel-header"><div><h2>Loss-Making Trips</h2><p class="muted">Trips with negative profit (filtered).</p></div></div>
+    {% if loss_trips %}
+    <div class="table-wrap"><table><thead><tr><th>Trip</th><th>Date</th><th>Vehicle</th><th>Driver</th><th>Profit</th></tr></thead><tbody>
+      {% for t in loss_trips %}<tr><td><a class="text-link" href="{% url 'trips:detail' t.id %}">#{{ t.id }}</a></td><td>{{ t.trip_date }}</td><td>{{ t.vehicle.vehicle_number }}</td><td>{{ t.driver.driver_name }}</td><td>₹ {{ t.profit|floatformat:2 }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<div class="empty-state compact"><strong>No loss-making trips</strong><p>No negative-profit trips for the selected filters.</p></div>{% endif %}
+  </section>
+</div>
+
+{{ vehicle_distribution|json_script:"vehicle-dist-data" }}
+{{ chart_data|json_script:"finance-trend-data" }}
+<script>
+(function(){
+  function byId(id){ return document.getElementById(id); }
+  function togglePeriodFields(){
+    var period = (byId('filter-period') || {}).value || '';
+    var showDaily = period === 'daily';
+    var showMonthly = period === 'monthly';
+    var showYearly = period === 'yearly';
+    var showCustom = period === 'custom' || period === '';
+    document.querySelectorAll('.period-field').forEach(function(el){ el.style.display = 'none'; });
+    if (showDaily) document.querySelectorAll('.period-daily').forEach(function(el){ el.style.display = ''; });
+    if (showMonthly) document.querySelectorAll('.period-monthly').forEach(function(el){ el.style.display = ''; });
+    if (showYearly) document.querySelectorAll('.period-yearly').forEach(function(el){ el.style.display = ''; });
+    if (showCustom) document.querySelectorAll('.period-custom').forEach(function(el){ el.style.display = ''; });
+  }
+  var periodSel = byId('filter-period');
+  if (periodSel) { periodSel.addEventListener('change', togglePeriodFields); togglePeriodFields(); }
+
+  if (!window.Chart) return;
+  var distEl = byId('vehicle-dist-data');
+  if (distEl) {
+    var d = JSON.parse(distEl.textContent || '{}');
+    var colors = ['#075a91','#00a99d','#c7a34a','#087fa5','#078a72','#b42318','#647d96','#082d59','#f59e0b','#10b981','#6366f1','#ef4444'];
+    function donut(canvasId, labels, values, pcts, title, valueFormatter) {
+      var el = byId(canvasId); if (!el || !labels || !labels.length) return;
+      var total = values.reduce(function(a,b){return a+(+b||0);},0);
+      new Chart(el, {
+        type: 'doughnut',
+        data: { labels: labels, datasets: [{ data: values, backgroundColor: labels.map(function(_,i){return colors[i%colors.length];}) }] },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: { callbacks: { label: function(ctx){
+              var v = +ctx.raw || 0; var pct = pcts && pcts[ctx.dataIndex] != null ? pcts[ctx.dataIndex] : (total ? (v/total*100) : 0);
+              var vs = valueFormatter ? valueFormatter(v) : v;
+              return ctx.label + ': ' + vs + ' (' + pct.toFixed(1) + '%)';
+            }}}
+          }
+        }
+      });
+    }
+    var money = function(v){ return '₹ ' + (+v||0).toFixed(2); };
+    donut('revDonut', d.labels, d.revenue, d.revenue_pct, 'Revenue', money);
+    donut('expDonut', d.labels, d.expenses, d.expenses_pct, 'Expenses', money);
+    // Profit donut uses positive shares for chart but tooltip shows actual profit and positive share
+    var profitPcts = d.profit_pct || [];
+    donut('profitDonut', d.labels, d.profit_chart && d.profit_chart.length ? d.profit_chart : d.profit, profitPcts, 'Profit', money);
+  }
+
+  var trendEl = byId('finance-trend-data');
+  if (trendEl && byId('financeTrend')) {
+    var t = JSON.parse(trendEl.textContent || '{}');
+    if (t.labels && t.labels.length) {
+      new Chart(byId('financeTrend'), {
+        type: 'bar',
+        data: { labels: t.labels, datasets: [
+          { label: 'Revenue', data: t.revenue, backgroundColor: 'rgba(7,90,145,0.7)' },
+          { label: 'Expenses', data: t.expenses, backgroundColor: 'rgba(199,163,74,0.7)' },
+          { label: 'Profit', data: t.profit, type: 'line', borderColor: '#078a72', backgroundColor: 'rgba(7,138,114,0.15)', tension: 0.2 }
+        ]},
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+  }
+})();
+</script>
 {% endblock %}

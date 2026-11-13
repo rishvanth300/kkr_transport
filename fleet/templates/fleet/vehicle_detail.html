@@ -1,0 +1,55 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Vehicle Details | KKR Transport{% endblock %}
+{% block page_eyebrow %}Fleet{% endblock %}
+{% block page_title %}Vehicle Details{% endblock %}
+
+{% block dashboard_content %}
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>{{ vehicle.vehicle_number }}</h2>
+      <p class="muted">Vehicle and assigned driver information from current records.</p>
+    </div>
+    <div class="form-actions" style="margin-top:0;">
+      <a class="button-link small" href="{% url 'fleet:vehicle_financial' vehicle.pk %}">Vehicle Financial Dashboard</a>
+      <a class="button-link small secondary-button" href="{% url 'dashboard:trucks' %}">Back to trucks</a>
+    </div>
+  </div>
+
+  <h3 style="margin:0.2rem 0 0.5rem;color:var(--secondary-blue);">Vehicle Information</h3>
+  <dl class="detail-list">
+    <div><dt>Vehicle Number</dt><dd>{{ vehicle.vehicle_number }}</dd></div>
+    <div><dt>Make</dt><dd>{{ vehicle.vehicle_make }}</dd></div>
+    <div><dt>Model</dt><dd>{{ vehicle.vehicle_model }}</dd></div>
+    <div><dt>Manufacturing Year</dt><dd>{{ vehicle.manufacturing_year }}</dd></div>
+    <div><dt>Wheel Configuration</dt><dd>{{ vehicle.wheel_configuration }} wheels</dd></div>
+    <div><dt>FC Expiry</dt><dd>{{ vehicle.fc_expiry_date|date:"d M Y" }}</dd></div>
+    <div><dt>Insurance Expiry</dt><dd>{{ vehicle.insurance_expiry_date|date:"d M Y" }}</dd></div>
+    <div><dt>Pollution Certificate Expiry</dt><dd>{{ vehicle.pollution_certificate_expiry_date|date:"d M Y" }}</dd></div>
+  </dl>
+
+  <h3 style="margin:1rem 0 0.5rem;color:var(--secondary-blue);">Assigned Driver Information</h3>
+  {% if assigned_drivers %}
+    {% for driver in assigned_drivers %}
+      <div class="panel" style="margin:0 0 0.75rem;padding:0.85rem 1rem;">
+        <dl class="detail-list" style="margin:0;">
+          <div><dt>Driver Name</dt><dd>{{ driver.driver_name }}</dd></div>
+          <div><dt>Mobile Number</dt><dd>{{ driver.mobile_number }}{% if driver.alternate_mobile_number %} / {{ driver.alternate_mobile_number }}{% endif %}</dd></div>
+          <div><dt>Driving Licence Number</dt><dd>{{ driver.driving_licence_number }}</dd></div>
+          <div><dt>Licence Expiry Date</dt><dd>{{ driver.licence_expiry_date|date:"d M Y" }}</dd></div>
+        </dl>
+        <div class="form-actions" style="margin-top:0.5rem;">
+          <a class="button-link small" href="{% url 'fleet:driver_detail' driver.pk %}">View Driver</a>
+          <a class="button-link small secondary-button" href="{% url 'fleet:driver_edit' driver.pk %}">Edit / Change Assignment</a>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state compact">
+      <strong>No driver assigned</strong>
+      <p>Assign a registered driver to this vehicle from the driver edit page.</p>
+      <a class="button-link small" href="{% url 'fleet:driver_list' %}">Go to Driver Records</a>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

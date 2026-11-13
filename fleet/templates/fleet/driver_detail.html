@@ -1,0 +1,233 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Driver Details | KKR Transport{% endblock %}
+{% block page_eyebrow %}Operations{% endblock %}
+{% block page_title %}Driver Details{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-header" style="margin-bottom:1rem;">
+  <p class="muted" style="margin:0;">Complete driver profile, trip history, bata, advances and payments from existing records.</p>
+  <div class="form-actions" style="margin-top:0;">
+    <a class="button-link small" href="{% url 'fleet:driver_edit' driver.pk %}">Edit Driver</a>
+    <a class="button-link small secondary-button" href="{% url 'trips:advance_create' %}?driver={{ driver.id }}">Record Advance</a>
+    <a class="button-link small secondary-button" href="{% url 'trips:payment_create' %}?driver={{ driver.id }}">Record Payment</a>
+    <a class="button-link small secondary-button" href="{% url 'trips:driver_finance_detail' driver.id %}">Driver Finance</a>
+    <a class="button-link small secondary-button" href="{% url 'dashboard:drivers' %}">Back to records</a>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Driver Information</h2>
+      <p class="muted">Profile and current vehicle assignment.</p>
+    </div>
+  </div>
+  <dl class="detail-list">
+    <div><dt>Driver ID</dt><dd>{{ driver.id }}</dd></div>
+    <div><dt>Driver Name</dt><dd>{{ driver.driver_name }}</dd></div>
+    <div><dt>Mobile Number</dt><dd>{{ driver.mobile_number }}</dd></div>
+    <div><dt>Alternate Mobile Number</dt><dd>{{ driver.alternate_mobile_number|default:"—" }}</dd></div>
+    <div><dt>Driving Licence</dt><dd>{{ driver.driving_licence_number }}</dd></div>
+    <div><dt>Licence Expiry Date</dt><dd>{{ driver.licence_expiry_date|date:"d M Y" }}</dd></div>
+    <div><dt>Assigned Vehicle</dt>
+      <dd>
+        {% if driver.assigned_vehicle %}
+          <a href="{% url 'fleet:vehicle_detail' driver.assigned_vehicle.pk %}">{{ driver.assigned_vehicle.vehicle_number }}</a>
+          <span class="muted">({{ driver.assigned_vehicle.vehicle_make }} {{ driver.assigned_vehicle.vehicle_model }})</span>
+        {% else %}
+          —
+        {% endif %}
+      </dd>
+    </div>
+    <div style="grid-column:1/-1;"><dt>Address</dt><dd>{{ driver.address|linebreaksbr }}</dd></div>
+  </dl>
+</section>
+
+<section class="kpi-grid">
+  <article class="kpi-card accent-gold"><p class="kpi-label">Driver Bata</p><p class="kpi-value">₹ {{ finance.driver_bata|floatformat:2 }}</p><p class="kpi-meta">From trip records</p></article>
+  <article class="kpi-card accent-blue"><p class="kpi-label">Advance Given</p><p class="kpi-value" style="color:#075a91;">₹ {{ finance.advance_given|floatformat:2 }}</p><p class="kpi-meta">Advance transactions</p></article>
+  <article class="kpi-card"><p class="kpi-label">Other Payment</p><p class="kpi-value">₹ {{ finance.other_payment|floatformat:2 }}</p><p class="kpi-meta">Other payment records</p></article>
+  <article class="kpi-card accent-teal"><p class="kpi-label">Total Paid</p><p class="kpi-value">₹ {{ finance.total_paid|floatformat:2 }}</p><p class="kpi-meta">Advance + Other Payment</p></article>
+  <article class="kpi-card accent-emerald"><p class="kpi-label">Balance Due</p><p class="kpi-value" style="color:{% if finance.balance_due > 0 %}#b42318{% else %}#078a72{% endif %};">₹ {{ finance.balance_due|floatformat:2 }}</p><p class="kpi-meta">Driver Bata - Total Paid</p></article>
+  <article class="kpi-card"><p class="kpi-label">Extra Advance</p><p class="kpi-value" style="color:#b45309;">₹ {{ finance.extra_advance|floatformat:2 }}</p><p class="kpi-meta">Total Paid - Driver Bata</p></article>
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Trip Information</h2>
+      <p class="muted">Trip totals and trip-wise bata for this driver (from stored trip records).</p>
+    </div>
+  </div>
+  <div class="detail-grid" style="margin-bottom:1rem;">
+    <div class="detail-item"><span class="detail-label">Total Trips</span><strong>{{ total_trips }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Total Distance</span><strong>{{ total_distance|floatformat:2 }} KM</strong></div>
+  </div>
+  {% if trip_rows %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Trip</th>
+          <th>Date</th>
+          <th>Vehicle</th>
+          <th>Company</th>
+          <th>Route</th>
+          <th>Distance (KM)</th>
+          <th>Bata %</th>
+          <th>Bata Earned</th>
+          <th>Settled</th>
+          <th>Outstanding</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in trip_rows %}
+        <tr>
+          <td>#{{ row.trip.id }}</td>
+          <td>{{ row.trip.trip_date }}</td>
+          <td>{{ row.trip.vehicle.vehicle_number }}</td>
+          <td>{{ row.trip.company_name|default:"-" }}</td>
+          <td>{{ row.trip.from_location }} → {{ row.trip.to_location }}</td>
+          <td>{{ row.trip.distance_km|floatformat:2 }}</td>
+          <td>{{ row.bata_percentage|floatformat:2 }}%</td>
+          <td>₹ {{ row.bata|floatformat:2 }}</td>
+          <td>₹ {{ row.settled|floatformat:2 }}</td>
+          <td>₹ {{ row.outstanding|floatformat:2 }}</td>
+          <td><a class="text-link" href="{% url 'trips:detail' row.trip.id %}">View Trip</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state compact"><strong>No trips found</strong><p>No trip sheets recorded for this driver yet.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Advance History</h2>
+      <p class="muted">Driver advance transactions (separate from trip expenses).</p>
+    </div>
+  </div>
+  {% if finance.advances %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Reference</th>
+          <th>Description</th>
+          <th>Allocated/Settled</th>
+          <th>Unallocated</th>
+          <th>Recorded By</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in finance.advances %}
+        <tr>
+          <td>{{ a.payment_date }}</td>
+          <td>₹ {{ a.amount|floatformat:2 }}</td>
+          <td>{{ a.get_payment_method_display }}</td>
+          <td>{{ a.reference|default:"-" }}</td>
+          <td>{{ a.description|default:"-" }}</td>
+          <td>₹ {{ a.allocated_amount|floatformat:2 }}</td>
+          <td>₹ {{ a.unallocated_amount|floatformat:2 }}</td>
+          <td>{{ a.recorded_by }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted" style="margin-top:0.5rem;"><strong>Total advances:</strong> ₹ {{ finance.total_advances_received|floatformat:2 }}</p>
+  {% else %}
+  <div class="empty-state compact"><strong>No advances recorded</strong><p>No advance transactions found for this driver.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Payment History</h2>
+      <p class="muted">Other payment transactions recorded for this driver.</p>
+    </div>
+  </div>
+  {% if finance.payments %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Reference</th>
+          <th>Description</th>
+          <th>Recorded By</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in finance.payments %}
+        <tr>
+          <td>{{ p.payment_date }}</td>
+          <td>₹ {{ p.amount|floatformat:2 }}</td>
+          <td>{{ p.get_payment_method_display }}</td>
+          <td>{{ p.reference|default:"-" }}</td>
+          <td>{{ p.description|default:"-" }}</td>
+          <td>{{ p.recorded_by }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state compact"><strong>No other payments recorded</strong><p>Use Record Payment to add other payments for this driver.</p></div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>Settlement Allocation History</h2>
+      <p class="muted">Advance allocations settled against trip bata (existing allocation records).</p>
+    </div>
+  </div>
+  {% if settlement_rows %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Advance Ref</th>
+          <th>Related Trip</th>
+          <th>Trip Date</th>
+          <th>Vehicle</th>
+          <th>Recorded By</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in settlement_rows %}
+        <tr>
+          <td>{{ row.allocation.allocated_at }}</td>
+          <td>₹ {{ row.allocation.amount_allocated|floatformat:2 }}</td>
+          <td>Advance #{{ row.allocation.advance_id }} ({{ row.allocation.advance.payment_date }}, ₹ {{ row.allocation.advance.amount|floatformat:2 }})</td>
+          <td><a class="text-link" href="{% url 'trips:detail' row.trip.id %}">Trip #{{ row.trip.id }}</a></td>
+          <td>{{ row.trip.trip_date }}</td>
+          <td>{{ row.trip.vehicle.vehicle_number }}</td>
+          <td>{{ row.allocation.allocated_by }}</td>
+          <td>{{ row.allocation.note|default:"-" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state compact"><strong>No settlement allocation records found</strong><p>No advance allocations have been settled against this driver’s trip bata yet.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

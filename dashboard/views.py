@@ -9,19 +9,15 @@ from django.views.decorators.http import require_POST
 from accounts.models import Staff
 
 from .forms import StaffCreationForm, StaffEditForm, StaffPasswordResetForm
-from .services import get_operational_metrics, get_staff_metrics
+from .services import (
+    get_operational_metrics, get_staff_metrics, get_trip_financial_metrics,
+    get_trip_chart_data, get_top_and_loss_trips, get_vehicle_distribution_data,
+    resolve_date_range,
+)
 
 
 def superadmin_required(view):
-    """Restrict a view to authenticated Django superusers.
-
-    Args:
-        view: The protected view callable.
-
-    Returns:
-        A wrapper that redirects anonymous users to login and raises HTTP 403
-        for authenticated non-superusers before calling the original view.
-    """
+    """Restrict a view to authenticated Django superusers."""
 
     @wraps(view)
     def wrapped(request, *args, **kwargs):
@@ -36,15 +32,7 @@ def superadmin_required(view):
 
 
 def staff_required(view):
-    """Restrict a view to active, non-superuser Staff profiles.
-
-    Args:
-        view: The protected view callable.
-
-    Returns:
-        A wrapper that loads the active Staff profile, attaches it to the
-        request, and invokes the view, or denies unauthorized access.
-    """
+    """Restrict a view to active, non-superuser Staff profiles."""
 
     @wraps(view)
     def wrapped(request, *args, **kwargs):
@@ -65,23 +53,25 @@ def staff_required(view):
 @superadmin_required
 @never_cache
 def super_admin(request):
-    """Render the Super Admin dashboard with database-backed staff records.
+    """Render the Super Admin dashboard with database-backed staff records."""
+    from fleet.models import Driver, Vehicle
 
-    Args:
-        request: An authenticated Super Admin request.
-
-    Returns:
-        The rendered dashboard response. Staff profiles and their linked User
-        records are queried dynamically with ``select_related``.
-    """
-    from fleet.models import Vehicle
-
+    drivers_qs = Driver.objects.select_related("assigned_vehicle")
+    assigned_drivers = drivers_qs.filter(assigned_vehicle__isnull=False).count()
+    unassigned_drivers = drivers_qs.filter(assigned_vehicle__isnull=True).count()
     context = {
         "is_super_admin": True,
         "active_nav": "dashboard",
         "vehicles": Vehicle.objects.all(),
         **get_staff_metrics(),
         **get_operational_metrics(),
+        "chart_data": get_trip_chart_data(),
+        "vehicle_distribution": get_vehicle_distribution_data(),
+        "driver_visual": {
+            "labels": ["Assigned", "Unassigned"],
+            "values": [assigned_drivers, unassigned_drivers],
+            "total": drivers_qs.count(),
+        },
     }
     return render(request, "dashboard/super_admin.html", context)
 
@@ -89,16 +79,7 @@ def super_admin(request):
 @superadmin_required
 @never_cache
 def create_staff(request):
-    """Display and process the Super Admin-only staff registration form.
-
-    Args:
-        request: A GET request to display the form or a POST request carrying
-            submitted staff details.
-
-    Returns:
-        The form page with validation errors, or a redirect to the dashboard
-        after the form saves both records successfully.
-    """
+    """Display and process the Super Admin-only staff registration form."""
     if request.method == "POST":
         form = StaffCreationForm(request.POST)
         if form.is_valid():
@@ -259,8 +240,11 @@ def home(request):
     if staff is None:
         raise PermissionDenied
 
-    from fleet.models import Vehicle
+    from fleet.models import Driver, Vehicle
 
+    drivers_qs = Driver.objects.select_related("assigned_vehicle")
+    assigned_drivers = drivers_qs.filter(assigned_vehicle__isnull=False).count()
+    unassigned_drivers = drivers_qs.filter(assigned_vehicle__isnull=True).count()
     context = {
         "staff": staff,
         "staff_profile": staff,
@@ -268,6 +252,13 @@ def home(request):
         "active_nav": "dashboard",
         "vehicles": Vehicle.objects.all(),
         **get_operational_metrics(),
+        "chart_data": get_trip_chart_data(),
+        "vehicle_distribution": get_vehicle_distribution_data(),
+        "driver_visual": {
+            "labels": ["Assigned", "Unassigned"],
+            "values": [assigned_drivers, unassigned_drivers],
+            "total": drivers_qs.count(),
+        },
     }
     return render(request, "dashboard/index.html", context)
 
@@ -291,25 +282,65 @@ def trucks(request):
 @dashboard_access_required
 @never_cache
 def drivers(request):
-    """Render the drivers overview for the current authorized role."""
+    """Render driver records for the current authorized role."""
+    from fleet.models import Driver
+
     context = {
         "staff_profile": getattr(request, "staff_profile", None),
         "is_super_admin": request.is_super_admin,
         "active_nav": "drivers",
+        "drivers": Driver.objects.select_related("assigned_vehicle").all(),
         **get_operational_metrics(),
     }
     return render(request, "dashboard/drivers.html", context)
 
 
+
 @dashboard_access_required
 @never_cache
 def financial_overview(request):
-    """Render the financial overview for the current authorized role."""
+    """Render the company-wide financial overview with vehicle-wise charts."""
+    from fleet.models import Driver
+    from trips.models import TripSheet
+
+    filters = {
+        "period": request.GET.get("period") or "",
+        "day": request.GET.get("day") or "",
+        "month": request.GET.get("month") or "",
+        "year": request.GET.get("year") or "",
+        "date_from": request.GET.get("date_from") or "",
+        "date_to": request.GET.get("date_to") or "",
+        "company": request.GET.get("company") or "",
+        "driver": request.GET.get("driver") or "",
+        "vehicle": request.GET.get("vehicle") or "",
+    }
+    date_from, date_to, period = resolve_date_range(filters)
+    financial = get_trip_financial_metrics(filters)
+    chart = get_trip_chart_data(filters)
+    vehicle_dist = get_vehicle_distribution_data(filters)
+    top_loss = get_top_and_loss_trips(filters)
+    company_options = (
+        TripSheet.objects.exclude(company_name="")
+        .order_by("company_name")
+        .values_list("company_name", flat=True)
+        .distinct()
+    )
     context = {
         "staff_profile": getattr(request, "staff_profile", None),
         "is_super_admin": request.is_super_admin,
         "active_nav": "financial",
-        **get_operational_metrics(),
+        **get_operational_metrics(filters),
+        "financial": financial,
+        "chart_data": chart,
+        "vehicle_distribution": vehicle_dist,
+        "top_profit_trips": top_loss["top_profit_trips"],
+        "loss_trips": top_loss["loss_trips"],
+        "companies": company_options,
+        "drivers": Driver.objects.order_by("driver_name"),
+        "filters": filters,
+        "resolved_date_from": date_from,
+        "resolved_date_to": date_to,
+        "resolved_period": period,
     }
     return render(request, "dashboard/financial.html", context)
 

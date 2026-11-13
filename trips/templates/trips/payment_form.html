@@ -1,0 +1,33 @@
+{% extends "dashboard/layout.html" %}
+{% block title %}Record Payment | KKR Transport{% endblock %}
+{% block page_eyebrow %}Trips{% endblock %}
+{% block page_title %}Record Driver Payment{% endblock %}
+
+{% block dashboard_content %}
+<section class="panel form-panel">
+  <div class="panel-header">
+    <div>
+      <h2>Record Payment</h2>
+      <p class="muted">Record an other payment for a driver. This updates Total Paid and Balance Due using existing driver finance totals.</p>
+    </div>
+  </div>
+  <form method="post" class="stack-form" data-enter-nav="1">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="form-grid">
+      {% for field in form %}
+        <div class="field{% if field.name == 'description' or field.name == 'reference' %} field-span-2{% endif %}">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<small class="field-help">{{ field.help_text }}</small>{% endif %}
+          {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="form-actions">
+      <button type="submit">Save Payment</button>
+      <a class="button-link secondary-button" href="{% if driver %}{% url 'trips:driver_finance_detail' driver.id %}{% else %}{% url 'trips:driver_finance' %}{% endif %}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

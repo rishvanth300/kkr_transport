@@ -1,0 +1,131 @@
+{% extends "dashboard/layout.html" %}
+
+{% block title %}Vehicle Financial - {{ vehicle.vehicle_number }} | KKR Transport{% endblock %}
+{% block page_eyebrow %}Fleet{% endblock %}
+{% block page_title %}Vehicle Financial Dashboard{% endblock %}
+
+{% block extra_head %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="panel-header" style="margin-bottom:1rem;">
+  <p class="muted" style="margin:0;">Financial summary for <strong>{{ vehicle.vehicle_number }}</strong> ({{ vehicle.vehicle_make }} {{ vehicle.vehicle_model }}). All figures are calculated from this vehicle's trip records only.</p>
+  <div class="form-actions" style="margin-top:0;">
+    <a class="button-link secondary-button" href="{% url 'fleet:vehicle_detail' vehicle.pk %}">Vehicle Details</a>
+    <a class="button-link secondary-button" href="{% url 'dashboard:trucks' %}">Back to Trucks</a>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Date Filters</h2><p class="muted">Filter this vehicle's financials by daily, monthly, yearly or custom range.</p></div></div>
+  <form method="get" class="stack-form">
+    <div class="form-grid">
+      <div class="field"><label>Period</label>
+        <select name="period" id="v-period">
+          <option value="" {% if not filters.period %}selected{% endif %}>All / Custom range</option>
+          <option value="daily" {% if filters.period == "daily" %}selected{% endif %}>Daily</option>
+          <option value="monthly" {% if filters.period == "monthly" %}selected{% endif %}>Monthly</option>
+          <option value="yearly" {% if filters.period == "yearly" %}selected{% endif %}>Yearly</option>
+          <option value="custom" {% if filters.period == "custom" %}selected{% endif %}>Custom Range</option>
+        </select>
+      </div>
+      <div class="field vpf v-daily"><label>Day</label><input type="date" name="day" value="{{ filters.day }}"></div>
+      <div class="field vpf v-monthly"><label>Month</label><input type="number" min="1" max="12" name="month" value="{{ filters.month }}" placeholder="1-12"></div>
+      <div class="field vpf v-monthly v-yearly"><label>Year</label><input type="number" min="2000" max="2100" name="year" value="{{ filters.year }}" placeholder="YYYY"></div>
+      <div class="field vpf v-custom"><label>Date From</label><input type="date" name="date_from" value="{{ filters.date_from }}"></div>
+      <div class="field vpf v-custom"><label>Date To</label><input type="date" name="date_to" value="{{ filters.date_to }}"></div>
+    </div>
+    <div class="form-actions"><button type="submit">Apply Filters</button><a class="button-link secondary-button" href="{% url 'fleet:vehicle_financial' vehicle.pk %}">Reset</a></div>
+  </form>
+</section>
+
+<section class="kpi-grid">
+  <article class="kpi-card accent-gold"><p class="kpi-label">Total Revenue</p><p class="kpi-value">₹ {{ totals.total_revenue|floatformat:2 }}</p></article>
+  <article class="kpi-card accent-teal"><p class="kpi-label">Total Expenses</p><p class="kpi-value">₹ {{ totals.total_expenses|floatformat:2 }}</p></article>
+  <article class="kpi-card accent-emerald"><p class="kpi-label">Net Profit</p><p class="kpi-value">₹ {{ totals.net_profit|floatformat:2 }}</p><p class="kpi-meta">Revenue − Expenses</p></article>
+  <article class="kpi-card accent-blue"><p class="kpi-label">Total Trips</p><p class="kpi-value">{{ totals.total_trips|default:0 }}</p></article>
+  <article class="kpi-card"><p class="kpi-label">Total Distance</p><p class="kpi-value">{{ totals.total_distance|floatformat:2 }} km</p></article>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Expense Breakdown</h2><p class="muted">Calculated from this vehicle's trip expenses (driver advances/settlements not included).</p></div></div>
+  <div class="detail-grid">
+    <div class="detail-item"><span class="detail-label">Diesel Expenses</span><strong>₹ {{ totals.diesel_expenses|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Toll Expenses</span><strong>₹ {{ totals.toll_expenses|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Loading Expenses</span><strong>₹ {{ totals.loading_expenses|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Unloading Expenses</span><strong>₹ {{ totals.unloading_expenses|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Driver Bata</span><strong>₹ {{ totals.driver_bata|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Maintenance Expenses</span><strong>₹ {{ totals.maintenance_expenses|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Other Expenses</span><strong>₹ {{ totals.other_expenses|floatformat:2 }}</strong></div>
+    <div class="detail-item"><span class="detail-label">Load Commission</span><strong>₹ {{ totals.load_commission|floatformat:2 }}</strong></div>
+  </div>
+</section>
+
+<section class="dashboard-grid two-col" style="margin-bottom:1.25rem;">
+  <section class="panel" style="margin-bottom:0;">
+    <div class="panel-header"><div><h2>Revenue vs Expenses vs Profit</h2></div></div>
+    {% if summary.financial_available %}<div class="chart-wrap" style="height:280px;"><canvas id="vSummaryChart"></canvas></div>{% else %}<div class="empty-state compact"><strong>No data</strong><p>No trips for selected filters.</p></div>{% endif %}
+  </section>
+  <section class="panel" style="margin-bottom:0;">
+    <div class="panel-header"><div><h2>Expense Category Breakdown</h2></div></div>
+    {% if summary.financial_available %}<div class="chart-wrap" style="height:280px;"><canvas id="vExpenseChart"></canvas></div>{% else %}<div class="empty-state compact"><strong>No data</strong><p>No trips for selected filters.</p></div>{% endif %}
+  </section>
+</section>
+
+<section class="panel">
+  <div class="panel-header"><div><h2>Trip-wise Financial History</h2><p class="muted">All trips for this vehicle (filtered), newest first.</p></div></div>
+  {% if trips %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Trip</th><th>Date</th><th>Company</th><th>Driver</th><th>Route</th><th>Distance (km)</th><th>Revenue</th><th>Expenses</th><th>Profit</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for t in trips %}
+      <tr>
+        <td>#{{ t.id }}</td>
+        <td>{{ t.trip_date }}</td>
+        <td>{{ t.company_name }}</td>
+        <td>{{ t.driver.driver_name }}</td>
+        <td>{{ t.from_location }} → {{ t.to_location }}</td>
+        <td>{{ t.distance_km }}</td>
+        <td>₹ {{ t.total_revenue|floatformat:2 }}</td>
+        <td>₹ {{ t.total_cost|floatformat:2 }}</td>
+        <td>₹ {{ t.profit|floatformat:2 }}</td>
+        <td><a class="text-link" href="{% url 'trips:detail' t.id %}">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <div class="empty-state"><strong>No trip records</strong><p>No trips found for this vehicle in the selected period.</p></div>
+  {% endif %}
+</section>
+
+{{ totals|json_script:"v-totals-data" }}
+<script>
+(function(){
+  function byId(id){return document.getElementById(id);} 
+  function toggle(){
+    var p=(byId('v-period')||{}).value||'';
+    document.querySelectorAll('.vpf').forEach(function(el){el.style.display='none';});
+    if(p==='daily') document.querySelectorAll('.v-daily').forEach(function(el){el.style.display='';});
+    if(p==='monthly') document.querySelectorAll('.v-monthly').forEach(function(el){el.style.display='';});
+    if(p==='yearly') document.querySelectorAll('.v-yearly').forEach(function(el){el.style.display='';});
+    if(p==='custom'||p==='') document.querySelectorAll('.v-custom').forEach(function(el){el.style.display='';});
+  }
+  var sel=byId('v-period'); if(sel){sel.addEventListener('change',toggle); toggle();}
+  if(!window.Chart) return;
+  var dEl=byId('v-totals-data'); if(!dEl) return;
+  var d=JSON.parse(dEl.textContent||'{}');
+  var rev=+d.total_revenue||0, exp=+d.total_expenses||0, prof=+d.net_profit||0;
+  if(byId('vSummaryChart')){
+    new Chart(byId('vSummaryChart'),{type:'bar',data:{labels:['Revenue','Expenses','Net Profit'],datasets:[{label:'Amount (₹)',data:[rev,exp,prof],backgroundColor:['rgba(7,90,145,0.7)','rgba(199,163,74,0.7)','rgba(7,138,114,0.7)']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  }
+  if(byId('vExpenseChart')){
+    var labels=['Diesel','Toll','Loading','Unloading','Driver Bata','Maintenance','Other','Commission'];
+    var vals=[+d.diesel_expenses||0,+d.toll_expenses||0,+d.loading_expenses||0,+d.unloading_expenses||0,+d.driver_bata||0,+d.maintenance_expenses||0,+d.other_expenses||0,+d.load_commission||0];
+    var colors=['#075a91','#087fa5','#00a99d','#078a72','#c7a34a','#082d59','#647d96','#ef4444'];
+    new Chart(byId('vExpenseChart'),{type:'doughnut',data:{labels:labels,datasets:[{data:vals,backgroundColor:colors}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:function(ctx){var v=+ctx.raw||0;var total=vals.reduce(function(a,b){return a+b;},0);var pct=total?(v/total*100):0;return ctx.label+': ₹ '+v.toFixed(2)+' ('+pct.toFixed(1)+'%)';}}}}}});
+  }
+})();
+</script>
+{% endblock %}
